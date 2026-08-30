@@ -138,6 +138,16 @@ func get_routes() -> Array:
 func get_route_count() -> int:
     return _edges.size()
 
+## 创建整张 Map 的深副本，供 standalone 控制器维持独占所有权。
+func duplicate_map() -> SceneMap:
+    var result := SceneMap.new()
+    for node_id in _sorted_node_ids():
+        result._nodes[node_id] = _copy_node(_nodes[node_id] as SceneNode)
+    for edge_id in _sorted_edge_ids():
+        result._edges[edge_id] = (_edges[edge_id] as RouteEdge).duplicate_edge()
+    result._entry_node_id = _entry_node_id
+    return result
+
 ## 删除显式出口并同步清理它占用的 RouteEdge。
 func remove_exit(node_id: String, port_id: String) -> bool:
     var node := get_node(node_id)

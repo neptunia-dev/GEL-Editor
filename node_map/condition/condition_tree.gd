@@ -143,6 +143,73 @@ func update_switch_case(branch_id: String, value: Variant, label: String) -> boo
     _clear_error()
     return true
 
+## 用同一稳定 ID 的完整 wrapper 替换现有定义。分支引用必须继续组成合法树。
+func update_wrapper(wrapper: ConditionWrapper) -> bool:
+    if wrapper == null or not _wrappers.has(wrapper.wrapper_id):
+        return _fail("wrapper does not exist")
+    if not (wrapper is IfWrapper or wrapper is SwitchCaseWrapper or wrapper is NumericCompareWrapper):
+        return _fail("unsupported wrapper type")
+    var candidate := duplicate_tree()
+    candidate._wrappers[wrapper.wrapper_id] = wrapper.duplicate_wrapper()
+    var errors := candidate.validate_self()
+    if not errors.is_empty():
+        return _fail(str(errors[0]))
+    _copy_from(candidate)
+    _clear_error()
+    return true
+
+## 更新 branch 草稿，同时保留 branch_id、child wrapper 和 RouteEdge 身份。
+func update_branch_value(
+        branch_id: String,
+        label: String,
+        has_match_value: bool,
+        match_value: Variant = null,
+) -> bool:
+    if not _branches.has(branch_id):
+        return _fail("branch_id '%s' does not exist" % branch_id)
+    var existing := _branches[branch_id] as ConditionBranch
+    var candidate_branch := ConditionBranch.new(
+        branch_id, label.strip_edges(), existing.child_wrapper_id,
+        has_match_value, match_value,
+    )
+    var candidate := duplicate_tree()
+    candidate._branches[branch_id] = candidate_branch
+    var errors := candidate.validate_self()
+    if not errors.is_empty():
+        return _fail(str(errors[0]))
+    _copy_from(candidate)
+    _clear_error()
+    return true
+
+## 将一个完整的新 wrapper 挂到现有叶子 branch；失败时不改变原树。
+func attach_child_wrapper(
+        parent_branch_id: String,
+        wrapper: ConditionWrapper,
+        branches: Array,
+) -> bool:
+    if not _branches.has(parent_branch_id):
+        return _fail("branch_id '%s' does not exist" % parent_branch_id)
+    if not (_branches[parent_branch_id] as ConditionBranch).is_terminal():
+        return _fail("branch '%s' already has a child wrapper" % parent_branch_id)
+    if wrapper == null:
+        return _fail("wrapper must not be null")
+
+    var candidate := duplicate_tree()
+    if not candidate.add_wrapper(wrapper):
+        return _fail(candidate.last_error)
+    for branch in branches:
+        if not branch is ConditionBranch:
+            return _fail("child wrapper branches must be ConditionBranch values")
+        if not candidate.add_branch(branch):
+            return _fail(candidate.last_error)
+    (candidate._branches[parent_branch_id] as ConditionBranch).child_wrapper_id = wrapper.wrapper_id
+    var errors := candidate.validate_self()
+    if not errors.is_empty():
+        return _fail(str(errors[0]))
+    _copy_from(candidate)
+    _clear_error()
+    return true
+
 ## 仅 switch case 可以单独删除；固定分支和 default 必须随 wrapper 一起删除。
 func remove_branch(branch_id: String) -> bool:
     last_removed_branch_ids = []
@@ -344,6 +411,17 @@ func _sorted_branch_ids() -> Array:
     var ids := _branches.keys()
     ids.sort()
     return ids
+
+func _copy_from(other: ConditionTree) -> void:
+    root_wrapper_id = other.root_wrapper_id
+    _wrappers = {}
+    _branches = {}
+    for wrapper in other.get_wrappers():
+        _wrappers[wrapper.wrapper_id] = wrapper.duplicate_wrapper()
+    for branch in other.get_branches():
+        _branches[branch.branch_id] = branch.duplicate_branch()
+    _duplicate_wrapper_ids = other._duplicate_wrapper_ids.duplicate()
+    _duplicate_branch_ids = other._duplicate_branch_ids.duplicate()
 
 func _fail(message: String) -> bool:
     last_error = message
