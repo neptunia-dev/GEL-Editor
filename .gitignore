@@ -1,0 +1,6 @@
+# Godot generated metadata
+.godot/
+**/*.uid
+
+# Tests stay in the host project or a separate verification project
+tests/
