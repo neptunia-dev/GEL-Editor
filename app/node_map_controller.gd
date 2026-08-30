@@ -152,11 +152,65 @@ func update_branch(
         return _fail(node.last_error)
     return update_scene(node)
 
+func add_root_wrapper(node_id: String, wrapper_kind: String) -> bool:
+    var node := _scene_map.get_node(node_id)
+    if node == null:
+        return _fail("Scene does not exist")
+    if node.has_condition_tree():
+        return _fail("Scene already has a root wrapper")
+    var bundle := _create_wrapper_bundle(wrapper_kind)
+    if bundle.is_empty():
+        return _fail("unsupported wrapper type '%s'" % wrapper_kind)
+    var wrapper := bundle["wrapper"] as ConditionWrapper
+    var tree := ConditionTree.new(wrapper.wrapper_id, [wrapper], bundle["branches"])
+    var errors := tree.validate_self()
+    if not errors.is_empty():
+        return _fail(str(errors[0]))
+    if not node.set_condition_tree(tree):
+        return _fail(node.last_error)
+    return update_scene(node)
+
+func add_switch_case(node_id: String, wrapper_id: String) -> bool:
+    var node := _scene_map.get_node(node_id)
+    if node == null or not node.has_condition_tree():
+        return _fail("condition tree does not exist")
+    var tree := node.get_condition_tree()
+    var wrapper := tree.get_wrapper(wrapper_id)
+    if not wrapper is SwitchCaseWrapper:
+        return _fail("wrapper is not a switch")
+    var switch_wrapper := wrapper as SwitchCaseWrapper
+    var case_number := switch_wrapper.case_branch_ids.size() + 1
+    var match_value: Variant = "new_case_%d" % case_number
+    while _switch_has_value(tree, switch_wrapper, match_value):
+        case_number += 1
+        match_value = "new_case_%d" % case_number
+    var branch := ConditionBranch.new(
+        _new_id("branch"), "New case %d" % case_number, "", true, match_value,
+    )
+    if not tree.add_switch_case(wrapper_id, branch):
+        return _fail(tree.last_error)
+    if not node.set_condition_tree(tree):
+        return _fail(node.last_error)
+    return update_scene(node)
+
 func add_child_wrapper(node_id: String, branch_id: String, wrapper_kind: String) -> bool:
     var node := _scene_map.get_node(node_id)
     if node == null or not node.has_condition_tree():
         return _fail("condition tree does not exist")
     var tree := node.get_condition_tree()
+    var bundle := _create_wrapper_bundle(wrapper_kind)
+    if bundle.is_empty():
+        return _fail("unsupported wrapper type '%s'" % wrapper_kind)
+    var wrapper := bundle["wrapper"] as ConditionWrapper
+    var branches := bundle["branches"] as Array
+
+    if not tree.attach_child_wrapper(branch_id, wrapper, branches):
+        return _fail(tree.last_error)
+    if not node.set_condition_tree(tree):
+        return _fail(node.last_error)
+    return update_scene(node)
+
+func _create_wrapper_bundle(wrapper_kind: String) -> Dictionary:
     var wrapper_id := _new_id("wrapper")
     var wrapper: ConditionWrapper
     var branches: Array = []
@@ -187,12 +241,16 @@ func add_child_wrapper(node_id: String, branch_id: String, wrapper_kind: String)
             ConditionBranch.new(greater_id, ">"),
         ]
     else:
-        return _fail("unsupported wrapper type '%s'" % wrapper_kind)
-    if not tree.attach_child_wrapper(branch_id, wrapper, branches):
-        return _fail(tree.last_error)
-    if not node.set_condition_tree(tree):
-        return _fail(node.last_error)
-    return update_scene(node)
+        return {}
+    return {"wrapper": wrapper, "branches": branches}
+
+func _switch_has_value(tree: ConditionTree, wrapper: SwitchCaseWrapper, value: Variant) -> bool:
+    var key := ConditionBranch.scalar_key(value)
+    for branch_id in wrapper.case_branch_ids:
+        var branch := tree.get_branch(str(branch_id))
+        if branch != null and branch.has_match_value and ConditionBranch.scalar_key(branch.match_value) == key:
+            return true
+    return false
 
 func remove_branch_subtree(node_id: String, branch_id: String) -> bool:
     var node := _scene_map.get_node(node_id)

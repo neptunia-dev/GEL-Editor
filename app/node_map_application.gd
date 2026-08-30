@@ -124,6 +124,9 @@ func _connect_canvas() -> void:
         _controller.select_object(kind, stable_id)
     )
     _canvas.add_scene_requested.connect(_show_add_dialog_at)
+    _canvas.root_wrapper_requested.connect(func(node_id: String, kind: String):
+        _controller.add_root_wrapper(node_id, kind)
+    )
     _canvas.scenes_deletion_requested.connect(_confirm_scene_deletion)
 
 func _connect_inspector() -> void:
@@ -132,6 +135,9 @@ func _connect_inspector() -> void:
     _inspector.branch_apply_requested.connect(_apply_branch_draft)
     _inspector.child_wrapper_requested.connect(func(node_id: String, branch_id: String, kind: String):
         _controller.add_child_wrapper(node_id, branch_id, kind)
+    )
+    _inspector.switch_case_add_requested.connect(func(node_id: String, wrapper_id: String):
+        _controller.add_switch_case(node_id, wrapper_id)
     )
     _inspector.branch_subtree_removal_requested.connect(func(node_id: String, branch_id: String):
         _controller.remove_branch_subtree(node_id, branch_id)

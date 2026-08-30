@@ -5,6 +5,7 @@ signal scene_apply_requested(draft: Dictionary)
 signal wrapper_apply_requested(draft: Dictionary)
 signal branch_apply_requested(draft: Dictionary)
 signal child_wrapper_requested(node_id: String, branch_id: String, wrapper_kind: String)
+signal switch_case_add_requested(node_id: String, wrapper_id: String)
 signal branch_subtree_removal_requested(node_id: String, branch_id: String)
 signal branch_removal_requested(node_id: String, branch_id: String)
 signal edge_removal_requested(edge_id: String)
@@ -139,6 +140,11 @@ func _show_wrapper(stable_id: Dictionary) -> void:
         cases.text = "\n".join(lines)
         _content.add_child(cases)
         _fields["cases"] = cases
+        var add_case := Button.new()
+        add_case.text = "+ Add Case"
+        add_case.pressed.connect(func(): switch_case_add_requested.emit(node_id, wrapper_id))
+        _content.add_child(add_case)
+        _fields["add_case"] = add_case
     elif wrapper is NumericCompareWrapper:
         var numeric := wrapper as NumericCompareWrapper
         _add_readonly("Type", "Numeric compare")

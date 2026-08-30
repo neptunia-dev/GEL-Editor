@@ -9,8 +9,12 @@ signal scenes_deletion_requested(node_ids: Array)
 signal node_positions_committed(positions: Dictionary)
 signal object_selected(kind: String, stable_id: Variant)
 signal add_scene_requested(graph_position: Vector2)
+signal root_wrapper_requested(node_id: String, wrapper_kind: String)
 
 const POPUP_ADD_SCENE := 1
+const POPUP_ADD_IF_WRAPPER := 101
+const POPUP_ADD_SWITCH_WRAPPER := 102
+const POPUP_ADD_NUMERIC_WRAPPER := 103
 const HOVER_DISTANCE := 10.0
 const PORT_HOTZONE_HALF_SIZE := Vector2(30, 22)
 
@@ -22,6 +26,8 @@ var _hover_edge_id: String = ""
 var _selected_edge_id: String = ""
 var _popup_position: Vector2 = Vector2.ZERO
 var _popup: PopupMenu
+var _node_popup: PopupMenu
+var _context_node_id: String = ""
 var _connection_drag_origin: Dictionary = {}
 
 func _ready() -> void:
@@ -44,6 +50,7 @@ func _ready() -> void:
     show_arrange_button = false
     _apply_theme()
     _create_popup()
+    _create_node_popup()
 
     connection_request.connect(_on_connection_request)
     connection_drag_started.connect(_on_connection_drag_started)
@@ -71,6 +78,9 @@ func get_selected_edge_id() -> String:
 
 func get_hover_edge_id() -> String:
     return _hover_edge_id
+
+func get_context_node_id() -> String:
+    return _context_node_id
 
 func center_on_selection() -> void:
     var selected_views: Array = []
@@ -111,6 +121,7 @@ func _sync_views() -> void:
             _views[scene_node.node_id] = view
             view.inspect_requested.connect(_on_view_inspect_requested)
             view.layout_changed.connect(_on_view_layout_changed)
+            view.context_menu_requested.connect(_on_view_context_menu_requested)
         view.set_scene_node(scene_node, _scene_map.get_entry_node_id() == scene_node.node_id)
     for node_id in _views.keys():
         if active.has(node_id):
@@ -220,6 +231,26 @@ func _on_view_inspect_requested(kind: String, stable_id: Dictionary) -> void:
 func _on_view_layout_changed(_node_id: String) -> void:
     call_deferred("_reconnect_edges")
 
+func _on_view_context_menu_requested(node_id: String, screen_position: Vector2) -> void:
+    _context_node_id = node_id
+    var scene_node := _scene_map.get_node(node_id)
+    var disabled := scene_node == null or scene_node.has_condition_tree()
+    for item_id in [POPUP_ADD_IF_WRAPPER, POPUP_ADD_SWITCH_WRAPPER, POPUP_ADD_NUMERIC_WRAPPER]:
+        _node_popup.set_item_disabled(_node_popup.get_item_index(item_id), disabled)
+    _node_popup.position = Vector2i(screen_position)
+    _node_popup.popup()
+
+func _on_node_popup_id_pressed(id: int) -> void:
+    var kind := ""
+    if id == POPUP_ADD_IF_WRAPPER:
+        kind = "if"
+    elif id == POPUP_ADD_SWITCH_WRAPPER:
+        kind = "switch"
+    elif id == POPUP_ADD_NUMERIC_WRAPPER:
+        kind = "numeric_compare"
+    if not kind.is_empty() and not _context_node_id.is_empty():
+        root_wrapper_requested.emit(_context_node_id, kind)
+
 func _on_popup_request(at_position: Vector2) -> void:
     _popup_position = at_position
     _popup.position = Vector2i(get_screen_position() + at_position)
@@ -316,6 +347,14 @@ func _create_popup() -> void:
     _popup.add_item("Add Scene", POPUP_ADD_SCENE)
     _popup.id_pressed.connect(_on_popup_id_pressed)
     add_child(_popup)
+
+func _create_node_popup() -> void:
+    _node_popup = PopupMenu.new()
+    _node_popup.add_item("Add If Wrapper", POPUP_ADD_IF_WRAPPER)
+    _node_popup.add_item("Add Switch Wrapper", POPUP_ADD_SWITCH_WRAPPER)
+    _node_popup.add_item("Add Numeric Compare Wrapper", POPUP_ADD_NUMERIC_WRAPPER)
+    _node_popup.id_pressed.connect(_on_node_popup_id_pressed)
+    add_child(_node_popup)
 
 func _apply_theme() -> void:
     add_theme_color_override("grid_minor", Color("2b313c"))

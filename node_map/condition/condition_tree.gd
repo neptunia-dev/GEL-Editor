@@ -143,6 +143,24 @@ func update_switch_case(branch_id: String, value: Variant, label: String) -> boo
     _clear_error()
     return true
 
+## 在指定 switch 的 default 之前追加一个稳定 case branch。
+func add_switch_case(wrapper_id: String, branch: ConditionBranch) -> bool:
+    if not _wrappers.has(wrapper_id) or not (_wrappers[wrapper_id] is SwitchCaseWrapper):
+        return _fail("wrapper '%s' is not a switch" % wrapper_id)
+    if branch == null or not branch.has_match_value:
+        return _fail("switch case branch must have a match value")
+    var candidate := duplicate_tree()
+    if not candidate.add_branch(branch):
+        return _fail(candidate.last_error)
+    var wrapper := candidate._wrappers[wrapper_id] as SwitchCaseWrapper
+    wrapper.case_branch_ids.append(branch.branch_id)
+    var errors := candidate.validate_self()
+    if not errors.is_empty():
+        return _fail(str(errors[0]))
+    _copy_from(candidate)
+    _clear_error()
+    return true
+
 ## 用同一稳定 ID 的完整 wrapper 替换现有定义。分支引用必须继续组成合法树。
 func update_wrapper(wrapper: ConditionWrapper) -> bool:
     if wrapper == null or not _wrappers.has(wrapper.wrapper_id):

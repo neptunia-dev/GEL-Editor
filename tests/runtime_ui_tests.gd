@@ -72,6 +72,22 @@ func _run() -> void:
             break
     _check(reverse_edge != null and reverse_edge.target_node_id == target.node_id, "dragging input to output creates the same directed route")
 
+    first_view = canvas.get_scene_view(first.node_id)
+    var right_click := InputEventMouseButton.new()
+    right_click.button_index = MOUSE_BUTTON_RIGHT
+    right_click.pressed = true
+    right_click.position = first_view.get_global_rect().get_center()
+    first_view._input(right_click)
+    _check(canvas.get_context_node_id() == first.node_id, "right-clicking a Scene opens its node context menu")
+    canvas._on_node_popup_id_pressed(canvas.POPUP_ADD_IF_WRAPPER)
+    var wrapped_scene = controller.get_scene(first.node_id)
+    _check(wrapped_scene.has_condition_tree(), "node context action creates a root wrapper through the controller")
+    _check(wrapped_scene.get_condition_tree().get_wrapper(
+        wrapped_scene.get_condition_tree().root_wrapper_id,
+    ) is IfWrapper, "Add If Wrapper creates the requested wrapper type")
+    _check(canvas.get_scene_view(first.node_id).get_condition_output_count() == 2, "new root wrapper exposes its terminal branch ports")
+    _check(not controller.add_root_wrapper(first.node_id, "switch"), "a second root wrapper is rejected")
+
     var positions := {
         first.node_id: Vector2(150, 180),
         target.node_id: Vector2(620, 210),
@@ -159,6 +175,30 @@ func _run() -> void:
     var leaked_copy = controller.get_scene_map()
     leaked_copy.remove_node("node-low")
     _check(controller.get_scene("node-low") != null, "controller map getter returns an ownership-safe copy")
+
+    controller.set_scene_map(SceneMap.new())
+    var switch_scene = controller.create_scene("switch-test", "Switch Test", Vector2.ZERO)
+    _check(controller.add_root_wrapper(switch_scene.node_id, "switch"), "test Scene receives a root Switch wrapper")
+    var switch_tree = controller.get_scene(switch_scene.node_id).get_condition_tree()
+    var switch_id = switch_tree.root_wrapper_id
+    var switch_before = switch_tree.get_wrapper(switch_id) as SwitchCaseWrapper
+    controller.select_object("wrapper", {"nodeId": switch_scene.node_id, "wrapperId": switch_id})
+    await process_frame
+    _check(application.get_inspector()._fields.has("add_case"), "Switch Inspector exposes an Add Case button")
+    (application.get_inspector()._fields["add_case"] as Button).pressed.emit()
+    await process_frame
+    switch_tree = controller.get_scene(switch_scene.node_id).get_condition_tree()
+    var switch_after = switch_tree.get_wrapper(switch_id) as SwitchCaseWrapper
+    _check(switch_after.case_branch_ids.size() == switch_before.case_branch_ids.size() + 1, "Add Case appends one stable switch branch")
+    var added_case_id := str(switch_after.case_branch_ids[-1])
+    var added_case: ConditionBranch = switch_tree.get_branch(added_case_id)
+    _check(not added_case_id.is_empty() and added_case.has_match_value, "new switch case has a stable ID and editable match value")
+    _check(canvas.get_scene_view(switch_scene.node_id).find_output_port({
+        "kind": RouteEdge.SOURCE_CONDITION_BRANCH,
+        "nodeId": switch_scene.node_id,
+        "wrapperId": switch_id,
+        "branchId": added_case_id,
+    }) >= 0, "new switch case immediately appears as a routable output port")
 
     application.queue_free()
     await process_frame

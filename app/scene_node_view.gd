@@ -3,6 +3,7 @@ class_name SceneNodeView
 
 signal inspect_requested(kind: String, stable_id: Dictionary)
 signal layout_changed(node_id: String)
+signal context_menu_requested(node_id: String, screen_position: Vector2)
 
 const PORT_TYPE_FLOW := 0
 const INPUT_COLOR := Color("8aa4c8")
@@ -28,6 +29,20 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
     update_port_hover(get_local_mouse_position())
+
+func _input(event: InputEvent) -> void:
+    if not event is InputEventMouseButton:
+        return
+    var button := event as InputEventMouseButton
+    if button.button_index != MOUSE_BUTTON_RIGHT or not button.pressed:
+        return
+    if not get_global_rect().has_point(button.position):
+        return
+    var local_position := get_global_transform_with_canvas().affine_inverse() * button.position
+    if _closest_port(local_position, true) >= 0 or _closest_port(local_position, false) >= 0:
+        return
+    context_menu_requested.emit(node_id, get_screen_position() + local_position)
+    get_viewport().set_input_as_handled()
 
 func set_scene_node(scene_node: SceneNode, is_entry: bool) -> void:
     _scene_node = scene_node

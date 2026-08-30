@@ -8,6 +8,7 @@
 不写 Lua 文件，也不提供 Undo/Redo。
 
 首次使用请参阅 [简明操作指南](OPERATION_GUIDE.md)。
+当前实现状态和后续工作见 [HANDOFF](HANDOFF.md)。
 
 ## 目录
 

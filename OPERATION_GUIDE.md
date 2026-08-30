@@ -80,9 +80,19 @@ Scene 左侧圆点是统一输入端口，右侧圆点是输出端口：
 带条件树的 Scene 会在卡片内部显示 wrapper。点击根 wrapper 左侧箭头可展开或折叠；
 折叠只改变显示，不会改变路由和稳定 ID。
 
+没有条件树的 Scene 可以通过节点右键菜单创建根 wrapper：
+
+- **Add If Wrapper**
+- **Add Switch Wrapper**
+- **Add Numeric Compare Wrapper**
+
+一个 Scene 只能有一个根 wrapper，因此已有条件树时这些选项会被禁用。
+
 展开后：
 
 - 点击 wrapper 标题，在 Inspector 中编辑变量、switch cases 或 numeric operands。
+- Switch Wrapper 可以点击 **+ Add Case** 追加新 case；新分支会获得稳定 ID，随后可在
+  cases 文本框中修改匹配值和显示标签。
 - 点击条件分支，在 Inspector 中编辑分支标签和 case 值。
 - 叶子分支可以通过 **Add child wrapper** 添加 `If`、`Switch` 或
   `Numeric compare` 子 wrapper。
@@ -94,9 +104,6 @@ Scene 左侧圆点是统一输入端口，右侧圆点是输出端口：
 - Switch default：`branch_id = default | 显示标签`
 - Numeric 变量：`var:score.current`
 - Numeric 常量：例如 `10`、`3.5`
-
-当前界面尚未提供“为空白 Scene 新建根 wrapper”的入口；可以通过 **Load Demo**
-体验和编辑现有条件树。
 
 ## 6. 删除 Scene
 
@@ -110,4 +117,3 @@ Scene 左侧圆点是统一输入端口，右侧圆点是输出端口：
 - 不写入 Scene Lua 文件。
 - 不执行 Runtime Package 导出或运行时预览。
 - 关闭应用会丢失当前编辑内容。
-
