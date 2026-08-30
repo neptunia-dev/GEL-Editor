@@ -1,0 +1,8 @@
+; Minimal headless project used to parse and test the standalone domain module.
+config_version=5
+
+[application]
+config/name="GEL Editor Node Map"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"

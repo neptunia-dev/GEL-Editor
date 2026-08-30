@@ -1,12 +1,14 @@
 # Node Map 文件架构设计
 
-> 状态：已落地初版
+> 状态：v2 已落地。RouteEdge 已支持 `scene_exit` 与 `condition_branch` 两种互斥源端点；
+> 条件树、原子删除和隐藏 Runtime exit 的当前契约见
+> [condition/README.md](condition/README.md)。下文保留的初版设计说明只适用于普通 ExitPort。
 >
 > 当前范围：实现 `RouteEdge` 和 `SceneMap` 的领域模型、受控数据访问和跨 Node 校验。
 >
 > 已有范围：单个 `SceneNode`、`CastMember` 和 `ExitPort` 已经落地。
 >
-> 当前不包含：Godot UI、View、完整工程读写、Runtime Package 导出桥接、Lua 执行和测试文件。
+> 当前不包含：Godot UI、View、完整工程文件读写和 Lua 执行。
 
 ## 1. 设计目标
 
@@ -506,8 +508,8 @@ node_map/serialization/
 
 ## 11. 测试边界
 
-本独立代码模块不上传测试文件。测试应放在宿主工程或单独的验证工程中，并通过
-preload 引用本模块：
+模块现在包含最小 `project.godot` 和 `tests/run_tests.gd`，用于独立执行领域模型的
+headless 回归。宿主工程仍应通过 preload 引用本模块，并补充 UI/文件导出集成测试：
 
 ```text
 宿主工程/
