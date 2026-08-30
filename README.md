@@ -69,7 +69,7 @@ var map := SceneMap.new()
 
 ## 集成方式
 
-该模块可以被宿主 Godot 项目作为目录引入，也可以作为 Git submodule 放到宿主项目的 `editor/node_map` 路径下。
+该模块可以被宿主 Godot 项目作为目录引入，也可以作为 Git submodule 放到宿主项目的 `editor/` 路径下。仓库内部的核心目录因此位于宿主项目的 `editor/node_map/`。
 
 模块内部的领域类不依赖宿主项目场景，不访问操作系统文件，也不依赖 UI。宿主负责：
 
