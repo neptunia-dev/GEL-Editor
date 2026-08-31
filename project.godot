@@ -1,0 +1,16 @@
+; Standalone GEL Node Map runtime application.
+config_version=5
+
+[application]
+config/name="GEL Editor Node Map"
+run/main_scene="res://app/node_map_application.tscn"
+
+[display]
+window/size/viewport_width=1440
+window/size/viewport_height=900
+window/size/window_width_override=1440
+window/size/window_height_override=900
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"

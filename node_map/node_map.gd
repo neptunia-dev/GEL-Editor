@@ -10,8 +10,10 @@ class_name NodeMapModule
 ## - CastMember：Scene 内的角色绑定；
 ## - ExitPort：Scene 的本地出口；
 ## - SceneNode：单个 Scene 的编辑器模型；
-## - RouteEdge：两个 SceneNode 之间的路由引用；
+## - ConditionTree / wrappers：SceneNode 的条件装饰树；
+## - RouteEdge：显式出口或条件叶子到目标 SceneNode 的路由引用；
 ## - SceneMap：Node 和 RouteEdge 的聚合根。
+## - LuaConditionCompiler / LuaConditionBlockWriter：纯文本条件 Lua 工具。
 ##
 ## GDScript 不能像 Python 一样在脚本文件中导出类型别名，因此具体对象仍通过
 ## 各自的 class_name 使用。这个入口类的主要作用是标识模块边界和承载模块版本。
@@ -20,7 +22,7 @@ class_name NodeMapModule
 ##
 ## 这是编辑器模块内部的数据结构版本，不等同于 Runtime Package formatVersion，也
 ## 不等同于游戏存档版本。字段结构发生不兼容变化时应递增这个值。
-const MODULE_VERSION := 1
+const MODULE_VERSION := 2
 
 ## 返回模块版本，供宿主或调试工具读取。
 static func version() -> int:

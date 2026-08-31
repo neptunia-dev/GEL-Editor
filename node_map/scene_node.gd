@@ -67,6 +67,9 @@ var _cast: Array = []
 ## 数组顺序就是出口的显示顺序。出口目标不存储在这里，未来由 Graph/Edge 单独维护。
 var _exits: Array = []
 
+## 可选条件树。它是 SceneNode 的装饰数据，不是独立 Scene，也不持有目标 Scene。
+var _condition_tree: ConditionTree = null
+
 ## 创建一个 SceneNode。
 ##
 ## p_main_script 为空时，会按照当前 scene_id 生成默认入口路径，方便新建 Scene。
@@ -82,6 +85,7 @@ func _init(
         p_cast: Array = [],
         p_exits: Array = [],
         p_position: Vector2 = Vector2.ZERO,
+        p_condition_tree: ConditionTree = null,
 ) -> void:
     node_id = p_node_id
     scene_id = p_scene_id
@@ -115,6 +119,9 @@ func _init(
             _exits.append((port as ExitPort).duplicate_port())
         else:
             _exits.append(port)
+
+    if p_condition_tree != null:
+        _condition_tree = p_condition_tree.duplicate_tree()
 
 ## 修改 Scene 的稳定 ID。
 ##
@@ -338,6 +345,43 @@ func get_exit(port_id: String) -> ExitPort:
         return (port as ExitPort).duplicate_port()
     return null
 
+## 原子替换当前条件树。传入对象会被深复制；结构不合法时保持原树不变。
+func set_condition_tree(tree: ConditionTree) -> bool:
+    if tree == null:
+        return _fail("condition tree must not be null; use clear_condition_tree()")
+    var errors := tree.validate_self()
+    if not errors.is_empty():
+        return _fail(str(errors[0]))
+    _condition_tree = tree.duplicate_tree()
+    _clear_error()
+    return true
+
+func clear_condition_tree() -> void:
+    _condition_tree = null
+    _clear_error()
+
+func has_condition_tree() -> bool:
+    return _condition_tree != null
+
+func get_condition_tree() -> ConditionTree:
+    return _condition_tree.duplicate_tree() if _condition_tree != null else null
+
+func remove_condition_branch(branch_id: String) -> bool:
+    if _condition_tree == null:
+        return _fail("condition tree does not exist")
+    if not _condition_tree.remove_branch(branch_id):
+        return _fail(_condition_tree.last_error)
+    _clear_error()
+    return true
+
+func remove_condition_wrapper(wrapper_id: String) -> bool:
+    if _condition_tree == null:
+        return _fail("condition tree does not exist")
+    if not _condition_tree.remove_wrapper(wrapper_id):
+        return _fail(_condition_tree.last_error)
+    _clear_error()
+    return true
+
 ## 检查当前 SceneNode 能独立判断的所有本地约束。
 ##
 ## 返回 Array 而不是遇到第一个错误就停止，便于编辑器一次在诊断面板中显示多个
@@ -399,6 +443,13 @@ func validate_self() -> Array:
         else:
             exit_names[exit_port.name] = true
 
+    if _condition_tree != null:
+        errors.append_array(_condition_tree.validate_self("condition_tree"))
+        for endpoint in _condition_tree.get_leaf_endpoints():
+            var generated_port := str(endpoint["port"])
+            if exit_names.has(generated_port):
+                errors.append("explicit exit name '%s' conflicts with a generated condition exit" % generated_port)
+
     return errors
 
 ## 转换为编辑器工程文件中的字典。
@@ -416,7 +467,7 @@ func to_editor_dict() -> Dictionary:
         if port is ExitPort:
             exit_data.append((port as ExitPort).to_editor_dict())
 
-    return {
+    var result: Dictionary = {
         "nodeId": node_id,
         "sceneId": scene_id,
         "title": title,
@@ -428,6 +479,9 @@ func to_editor_dict() -> Dictionary:
             "y": position.y,
         },
     }
+    if _condition_tree != null:
+        result["conditionTree"] = _condition_tree.to_editor_dict()
+    return result
 
 ## 转换为 Runtime Package 的 Scene 定义。
 ##
@@ -449,6 +503,9 @@ func to_runtime_scene() -> Dictionary:
     var exit_names: Array = []
     for port in _exits:
         exit_names.append((port as ExitPort).to_runtime_name())
+    if _condition_tree != null:
+        for endpoint in _condition_tree.get_leaf_endpoints():
+            exit_names.append(str(endpoint["port"]))
 
     var result: Dictionary = {
         "id": scene_id,

@@ -1,84 +1,114 @@
 # GEL Editor Node Map
 
-这是 GEL 编辑器的 Node Map 领域模型子模块。
+这是 GEL 的独立 Godot runtime Node Map 编辑器。运行项目会直接打开 GEL Editor
+窗口；它不使用 `EditorPlugin`、`@tool`、Godot Inspector 或 editor dock。
 
-当前模块只包含可复用的数据模型，不包含 Godot UI、GraphEdit、编辑器窗口、工程文件读写或测试文件。
+应用当前维护内存中的 `SceneMap`，支持创建、编辑、移动和删除 Scene，稳定端口连线、
+条件 wrapper 展开/折叠、连线 hover/选择，以及右侧 Inspector。当前版本不保存工程、
+不写 Lua 文件，也不提供 Undo/Redo。
 
-## 目录结构
+首次使用请参阅 [简明操作指南](OPERATION_GUIDE.md)。
+当前实现状态和后续工作见 [HANDOFF](HANDOFF.md)。
 
-```text
-editor/
-├─ README.md
-└─ node_map/
-   ├─ node_map.gd
-   ├─ cast_member.gd
-   ├─ exit_port.gd
-   ├─ scene_node.gd
-   ├─ map/
-   │  ├─ route_edge.gd
-   │  └─ scene_map.gd
-   ├─ scene-node-design.md
-   └─ map-file-architecture.md
-```
-
-## 核心类型
+## 目录
 
 ```text
-CastMember  Scene 内的角色绑定
-ExitPort    Scene 的本地出口
-SceneNode   单个 Scene 的编辑器数据模型
-RouteEdge   Scene 之间的路由引用
-SceneMap    Node 和 RouteEdge 的聚合根
+app/
+├─ node_map_application.gd/.tscn
+├─ node_map_controller.gd
+├─ node_map_canvas.gd
+├─ scene_node_view.gd
+├─ node_inspector.gd
+└─ demo_map_factory.gd
+node_map/
+├─ cast_member.gd
+├─ exit_port.gd
+├─ scene_node.gd
+├─ condition/
+│  ├─ condition_tree.gd
+│  ├─ condition_branch.gd
+│  ├─ condition_wrapper.gd
+│  ├─ if_wrapper.gd
+│  ├─ switch_case_wrapper.gd
+│  ├─ numeric_compare_wrapper.gd
+│  └─ numeric_operand.gd
+├─ lua/
+│  ├─ lua_condition_compiler.gd
+│  └─ lua_condition_block_writer.gd
+└─ map/
+   ├─ route_edge.gd
+   └─ scene_map.gd
 ```
 
-## 模块入口
+`SceneNode.conditionTree` 是可选装饰数据。分支若指向 child wrapper 就留在条件树内；
+叶子分支通过 `RouteEdge.SOURCE_CONDITION_BRANCH` 连接目标 Node，并导出为稳定隐藏出口：
 
-`node_map/node_map.gd` 是模块边界标识，并提供模块版本：
+```text
+__gel.condition.<wrapper_id>.<branch_id>
+```
+
+普通出口仍可用原构造方式：
 
 ```gdscript
-const NODE_MAP_MODULE = preload("res://node_map/node_map.gd")
-
-print(NODE_MAP_MODULE.version())
+var edge := RouteEdge.new("edge-id", "source-node", "port-id", "target-node")
 ```
 
-具体类型通过各自脚本中的 `class_name` 使用：
+条件叶子使用显式工厂：
 
 ```gdscript
-var node := SceneNode.new()
-var map := SceneMap.new()
+var edge := RouteEdge.from_condition_branch(
+    "edge-id", "source-node", "wrapper-id", "branch-id", "target-node",
+)
 ```
 
-## 当前职责
+完整模型、校验和编译契约见 [condition/README.md](node_map/condition/README.md)。
 
-- 保存单个 Scene Node 的编辑器数据。
-- 保存 Scene 内的角色绑定和出口。
-- 保存 Scene 之间的 Edge ID 引用。
-- 管理多个 Node 和 Edge。
-- 检查本地和跨 Node 的图结构约束。
-- 转换为编辑器字典和 Runtime Scene/route 数据。
+## 启动独立应用
 
-## 明确不包含
+```sh
+/Applications/Godot.app/Contents/MacOS/Godot --path .
+```
 
-- `GraphNode`、`GraphEdit` 和其他 Godot UI。
-- Scene Map 可视化界面。
-- 工程文件读写。
-- Runtime Package 文件导出。
-- Lua 执行。
-- 测试文件。
-- 宿主项目的角色注册表和资源管理。
+应用默认从空 Map 启动。要载入包含普通出口、嵌套 if/switch/numeric wrapper 和
+多条入边的内存验收图，可以运行：
 
-## 集成方式
+```sh
+/Applications/Godot.app/Contents/MacOS/Godot --path . -- --demo
+```
 
-该模块可以被宿主 Godot 项目作为目录引入，也可以作为 Git submodule 放到宿主项目的 `editor/` 路径下。仓库内部的核心目录因此位于宿主项目的 `editor/node_map/`。
+该模块可以作为独立的 Godot runtime Node Map 编辑器运行，也可以被宿主 Godot 项目作为目录引入或 Git submodule 放到宿主项目的 `editor/` 路径下。仓库内部的核心目录因此位于宿主项目的 `editor/node_map/`。
 
-模块内部的领域类不依赖宿主项目场景，不访问操作系统文件，也不依赖 UI。宿主负责：
+工具栏和画布右键菜单都能创建 Scene。第一个 Scene 自动成为入口；所有 UI 修改都
+先交给 `NodeMapController`，由领域模型接受后再刷新画布。
 
-- 创建和管理 Godot 项目。
-- 保存和加载工程 JSON。
-- 创建 `SceneNodeView` 或其他 UI。
-- 连接 View 与 `SceneMap`。
-- 调用 Runtime Package 导出器。
+## Lua 编译边界
 
-## 版本说明
+`LuaConditionCompiler.compile(tree, variable_catalog)` 校验变量声明和类型，返回 Lua
+区块及隐藏出口元数据。`LuaConditionBlockWriter` 只替换以下唯一标记内部的文本：
 
-`MODULE_VERSION` 是 Node Map 编辑器数据模型的版本，不等同于 GEL Runtime Package 的 `formatVersion`，也不等同于存档版本。
+```lua
+-- GEL:generated:conditions:start
+-- GEL:generated:conditions:end
+```
+
+宿主 Project/Exporter 仍负责读取、写回、UTF-8 校验和 Lua 预编译。领域模型不访问
+操作系统文件。
+
+## 验证
+
+领域模型回归：
+
+```sh
+/Applications/Godot.app/Contents/MacOS/Godot \
+  --headless --path . --script res://tests/run_tests.gd
+```
+
+Standalone UI 回归：
+
+```sh
+/Applications/Godot.app/Contents/MacOS/Godot \
+  --headless --path . --script res://tests/runtime_ui_tests.gd
+```
+
+`tests/emit_generated_lua.gd` 会把真实 compiler + writer 结果输出给引擎 Lua 解析器做
+集成预编译检查。
