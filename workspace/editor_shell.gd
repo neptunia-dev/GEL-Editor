@@ -64,5 +64,8 @@ func _on_bottom_tab_changed(tab_index: int) -> void:
 func _set_bottom_expanded(expanded: bool) -> void:
 	_bottom_expanded = expanded
 	_bottom_panel.custom_minimum_size.y = BOTTOM_EXPANDED_HEIGHT if expanded else BOTTOM_COLLAPSED_HEIGHT
-	_bottom_panel.set_current_tab(0 if expanded else -1)
+	if expanded:
+		_bottom_panel.set_current_tab(0)
+	elif _bottom_panel.get_current_tab() >= 0:
+		_bottom_panel.set_current_tab(-1)
 	_bottom_toggle.text = "Collapse" if expanded else "Expand"

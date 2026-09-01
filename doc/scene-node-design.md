@@ -7,7 +7,7 @@
 > 当前实现位于 `node_map/`：`CastMember`、`ExitPort` 和 `SceneNode` 均为不依赖 UI 的 `RefCounted` 类。
 >
 > v2：`SceneNode` 已增加可选 `ConditionTree` 装饰数据；当前契约见
-> [node_map/condition/README.md](node_map/condition/README.md)。下文“初版不包含条件”的描述仅作历史设计记录。
+> [条件树设计](condition-tree-design.md)。下文“初版不包含条件”的描述仅作历史设计记录。
 >
 > 本目录作为独立 Node Map 代码模块发布，宿主编辑器负责 View、工程读写和测试。
 

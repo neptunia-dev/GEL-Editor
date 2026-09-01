@@ -2,7 +2,7 @@
 
 > 状态：v2 已落地。RouteEdge 已支持 `scene_exit` 与 `condition_branch` 两种互斥源端点；
 > 条件树、原子删除和隐藏 Runtime exit 的当前契约见
-> [condition/README.md](condition/README.md)。下文保留的初版设计说明只适用于普通 ExitPort。
+> [条件树设计](condition-tree-design.md)。下文保留的初版设计说明只适用于普通 ExitPort。
 >
 > 当前范围：实现 `RouteEdge` 和 `SceneMap` 的领域模型、受控数据访问和跨 Node 校验。
 >
@@ -48,14 +48,18 @@ Map 层需要解决的问题：
 
 ```text
 editor/
-├─ README.md
+├─ doc/
+│  ├─ index.md
+│  ├─ editor-overview.md
+│  ├─ workspace-design.md
+│  ├─ condition-tree-design.md
+│  ├─ node-map-file-architecture.md
+│  └─ scene-node-design.md
 └─ node_map/
    ├─ node_map.gd
    ├─ cast_member.gd
    ├─ exit_port.gd
    ├─ scene_node.gd
-   ├─ scene-node-design.md
-   ├─ map-file-architecture.md
    └─ map/
       ├─ scene_map.gd       # 已实现
       └─ route_edge.gd       # 已实现
@@ -79,9 +83,6 @@ editor/
 │  ├─ cast_member.gd
 │  ├─ exit_port.gd
 │  ├─ scene_node.gd
-│  ├─ scene-node-design.md
-│  ├─ map-file-architecture.md
-│  │
 │  ├─ map/
 │  │  ├─ scene_map.gd
 │  │  └─ route_edge.gd
@@ -171,7 +172,7 @@ editor/
 - 判断图的可达性。
 - 绘制 Godot 控件。
 
-详细定义见：[scene-node-design.md](scene-node-design.md)。
+详细定义见：[SceneNode 设计](scene-node-design.md)。
 
 ### 3.4 `map/route_edge.gd`
 

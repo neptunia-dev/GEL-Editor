@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://ctsdlaqak4501" path="res://workspace/editor_shell.gd" id="1_editor_shell"]
 [ext_resource type="Script" uid="uid://nq0100midvqs" path="res://workspace/placeholder_canvas.gd" id="2_placeholder_canvas"]
+[ext_resource type="Script" path="res://workspace/explorer/explorer_tree.gd" id="3_explorer_tree"]
+[ext_resource type="Script" path="res://workspace/explorer/placeholder_explorer_panel.gd" id="4_placeholder_explorer_panel"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bar"]
 content_margin_left = 6.0
@@ -483,83 +485,52 @@ current_tab = 0
 drag_to_rearrange_enabled = true
 tabs_rearrange_group = 1
 
-[node name="FileSystem" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower" unique_id=1356569529]
+[node name="Explorer" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+script = ExtResource("4_placeholder_explorer_panel")
 metadata/_tab_index = 0
 
-[node name="FileSystemContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem" unique_id=1684863764]
+[node name="ExplorerToolbar" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
-[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=653372974]
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer/ExplorerToolbar"]
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_font_sizes/font_size = 12
-text = "FileSystem"
+text = "Explorer"
+vertical_alignment = 1
 
-[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=296803820]
+[node name="Filter" type="LineEdit" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer/ExplorerToolbar"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 0
+placeholder_text = "Filter..."
+clear_button_enabled = true
 
-[node name="Root" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=293795544]
+[node name="Refresh" type="Button" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer/ExplorerToolbar"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
-text = "res://"
+custom_minimum_size = Vector2(28, 28)
+focus_mode = 0
+mouse_default_cursor_shape = 2
+tooltip_text = "Refresh explorer"
+text = "Refresh"
 
-[node name="Scenes" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=624520456]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-text = "  scenes/"
-
-[node name="Scripts" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=97633485]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-text = "  scripts/"
-
-[node name="Assets" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=1333865872]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-text = "  assets/"
-
-[node name="FileSystemFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=595045184]
+[node name="ExplorerTree" type="Tree" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer"]
 layout_mode = 2
 size_flags_vertical = 3
-mouse_filter = 2
-
-[node name="Favorites" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower" unique_id=1811425867]
-visible = false
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
-metadata/_tab_index = 1
-
-[node name="FavoritesContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites" unique_id=1813246874]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=1194972139]
-layout_mode = 2
+custom_minimum_size = Vector2(0, 150)
+focus_mode = 2
+scroll_horizontal_enabled = false
 theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
-theme_override_font_sizes/font_size = 12
-text = "Favorites"
-
-[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=235748484]
-layout_mode = 2
-
-[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=88670253]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-text = "No favorite paths"
-
-[node name="FavoritesFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=844623302]
-layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 2
+theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
+script = ExtResource("3_explorer_tree")
 
 [node name="CenterRegion" type="VBoxContainer" parent="EditorRoot/DockHSplitMain" unique_id=1407617361]
 custom_minimum_size = Vector2(360, 0)
@@ -736,6 +707,7 @@ theme_override_styles/tab_hovered = SubResource("StyleBoxFlat_bottom_tab_hovered
 theme_override_styles/tab_selected = SubResource("StyleBoxFlat_bottom_tab_selected")
 tabs_position = 1
 deselect_enabled = true
+current_tab = -1
 
 [node name="Output" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=192454488]
 visible = false

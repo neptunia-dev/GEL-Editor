@@ -32,12 +32,12 @@ func _run() -> void:
 
 func _test_descriptor_helpers() -> void:
     var dock = MODULE_SCRIPT.dock(
-        "gel.filesystem", "File System", LEFT_LOWER,
+        "gel.sample_dock", "Sample Dock", LEFT_LOWER,
         null, Callable(self, "_content_factory"), [LEFT_LOWER, LEFT_UPPER],
     )
     _check(dock.kind == MODULE_SCRIPT.KIND_DOCK, "dock helper sets dock kind")
     _check(dock.allowed_slots == [LEFT_LOWER, LEFT_UPPER], "dock helper keeps allowed slots")
-    _check(dock.validate_self([LEFT_UPPER, LEFT_LOWER]).is_empty(), "file system dock descriptor validates")
+    _check(dock.validate_self([LEFT_UPPER, LEFT_LOWER]).is_empty(), "sample dock descriptor validates")
     _check(dock.has_content_provider(), "dock keeps delayed content factory")
 
     var workspace = MODULE_SCRIPT.workspace("gel.node_map", "Node Map")
@@ -52,21 +52,21 @@ func _test_dock_registration() -> void:
     var manager = LAYOUT_MANAGER_SCRIPT.new()
     var registry = REGISTRY_SCRIPT.new(manager)
     var descriptor = MODULE_SCRIPT.dock(
-        "gel.filesystem", "File System", LEFT_LOWER,
+        "gel.sample_dock", "Sample Dock", LEFT_LOWER,
         null, Callable(self, "_content_factory"), [LEFT_LOWER, LEFT_UPPER],
         true, true, 4,
     )
-    _check(registry.register_module(descriptor), "file system dock registers")
-    _check(registry.has_module("gel.filesystem"), "registered dock is queryable")
-    _check(manager.get_dock_ids() == ["gel.filesystem"], "dock metadata reaches layout manager")
-    _check(manager.get_dock_descriptor("gel.filesystem").default_slot == LEFT_LOWER, "default slot reaches layout manager")
-    _check(manager.get_dock_location("gel.filesystem")["slot"] == LEFT_LOWER, "default layout places dock in its slot")
+    _check(registry.register_module(descriptor), "sample dock registers")
+    _check(registry.has_module("gel.sample_dock"), "registered dock is queryable")
+    _check(manager.get_dock_ids() == ["gel.sample_dock"], "dock metadata reaches layout manager")
+    _check(manager.get_dock_descriptor("gel.sample_dock").default_slot == LEFT_LOWER, "default slot reaches layout manager")
+    _check(manager.get_dock_location("gel.sample_dock")["slot"] == LEFT_LOWER, "default layout places dock in its slot")
     _check(_factory_calls == 0, "registration does not call content factory")
 
-    var returned = registry.get_module("gel.filesystem")
+    var returned = registry.get_module("gel.sample_dock")
     returned.title = "Changed Copy"
-    _check(registry.get_module("gel.filesystem").title == "File System", "module queries return copies")
-    _check(registry.get_module_ids() == ["gel.filesystem"], "module IDs are stable and sorted")
+    _check(registry.get_module("gel.sample_dock").title == "Sample Dock", "module queries return copies")
+    _check(registry.get_module_ids() == ["gel.sample_dock"], "module IDs are stable and sorted")
     _check(registry.get_dock_modules().size() == 1 and registry.get_workspace_modules().is_empty(), "modules can be filtered by kind")
 
 func _test_workspace_registration() -> void:
@@ -111,11 +111,11 @@ func _test_layout_collision_is_atomic() -> void:
 func _test_unregistration() -> void:
     var manager = LAYOUT_MANAGER_SCRIPT.new()
     var registry = REGISTRY_SCRIPT.new(manager)
-    _check(registry.register_module(MODULE_SCRIPT.dock("gel.filesystem", "File System", LEFT_UPPER)), "module registers before removal")
-    _check(registry.unregister_module("gel.filesystem"), "module unregisters")
-    _check(not registry.has_module("gel.filesystem"), "unregistered module is removed from registry")
+    _check(registry.register_module(MODULE_SCRIPT.dock("gel.sample_dock", "Sample Dock", LEFT_UPPER)), "module registers before removal")
+    _check(registry.unregister_module("gel.sample_dock"), "module unregisters")
+    _check(not registry.has_module("gel.sample_dock"), "unregistered module is removed from registry")
     _check(manager.get_dock_ids().is_empty(), "unregistered module is removed from layout manager")
-    _check(not registry.unregister_module("gel.filesystem"), "unknown module cannot unregister")
+    _check(not registry.unregister_module("gel.sample_dock"), "unknown module cannot unregister")
 
 func _content_factory():
     _factory_calls += 1
