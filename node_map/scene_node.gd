@@ -7,7 +7,9 @@ class_name SceneNode
 ## 自身的字段，不知道其他 Node、路由目标、入口 Scene 或整个工程的全局数据。
 ##
 ## 这里使用 RefCounted 而不是 Godot 的 Node：SceneNode 是纯数据对象，不是 UI 控件。
-## 将来可以由一个单独的 SceneNodeView（继承 GraphNode）负责把它显示在画布上。
+## 未来的编辑器宿主可以通过独立的 View（例如继承 GraphNode 的场景视图）读取
+## SceneNode 并负责绘制，但 View 不应成为领域模型的依赖，也不应绕过本类的校验
+## 直接改写内部数据。
 ##
 ## 设计边界：
 ## - 编辑器字段：node_id、position，以及出口的 port_id。

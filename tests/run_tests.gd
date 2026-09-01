@@ -1,5 +1,21 @@
 extends SceneTree
 
+# 显式预加载领域脚本，避免全新 .godot 缓存下依赖 class_name 扫描顺序。
+const CastMember = preload("res://node_map/cast_member.gd")
+const ExitPort = preload("res://node_map/exit_port.gd")
+const ConditionBranch = preload("res://node_map/condition/condition_branch.gd")
+const ConditionWrapper = preload("res://node_map/condition/condition_wrapper.gd")
+const IfWrapper = preload("res://node_map/condition/if_wrapper.gd")
+const NumericOperand = preload("res://node_map/condition/numeric_operand.gd")
+const NumericCompareWrapper = preload("res://node_map/condition/numeric_compare_wrapper.gd")
+const SwitchCaseWrapper = preload("res://node_map/condition/switch_case_wrapper.gd")
+const ConditionTree = preload("res://node_map/condition/condition_tree.gd")
+const RouteEdge = preload("res://node_map/map/route_edge.gd")
+const SceneNode = preload("res://node_map/scene_node.gd")
+const SceneMap = preload("res://node_map/map/scene_map.gd")
+const LuaConditionCompiler = preload("res://node_map/lua/lua_condition_compiler.gd")
+const LuaConditionBlockWriter = preload("res://node_map/lua/lua_condition_block_writer.gd")
+
 var _failures: int = 0
 var _checks: int = 0
 
@@ -23,7 +39,7 @@ func _init() -> void:
         quit(1)
 
 func _test_if_compile() -> void:
-    var tree := _make_if_tree("flags.met_alice")
+    var tree = _make_if_tree("flags.met_alice")
     var result := LuaConditionCompiler.new().compile(tree, {
         "flags.met_alice": {"type": "boolean"},
     })
@@ -258,7 +274,7 @@ func _test_legacy_scene_behavior() -> void:
     _check(not runtime.is_empty() and runtime["routes"]["legacy"]["continue"] == "ending", "legacy scene export unchanged")
     _check(not map.to_editor_dict()["nodes"][0].has("conditionTree"), "conditionTree stays optional")
 
-func _make_if_tree(variable_key: String) -> ConditionTree:
+func _make_if_tree(variable_key: String):
     return ConditionTree.new(
         "if-root",
         [IfWrapper.new("if-root", variable_key, "true", "false")],

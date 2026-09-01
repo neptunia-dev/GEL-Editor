@@ -1,0 +1,951 @@
+[gd_scene format=3 uid="uid://v4rfvvmiou7c"]
+
+[ext_resource type="Script" uid="uid://ctsdlaqak4501" path="res://workspace/editor_shell.gd" id="1_editor_shell"]
+[ext_resource type="Script" uid="uid://nq0100midvqs" path="res://workspace/placeholder_canvas.gd" id="2_placeholder_canvas"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bar"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_normal"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_pressed"]
+content_margin_left = 7.0
+content_margin_top = 1.0
+content_margin_right = 7.0
+content_margin_bottom = 1.0
+bg_color = Color(0.192157, 0.290196, 0.419608, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.341176, 0.588235, 0.901961, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_hover"]
+content_margin_left = 7.0
+content_margin_top = 1.0
+content_margin_right = 7.0
+content_margin_bottom = 1.0
+bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.290196, 0.290196, 0.290196, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_main_screen_pressed"]
+content_margin_left = 9.0
+content_margin_top = 1.0
+content_margin_right = 9.0
+content_margin_bottom = 1.0
+bg_color = Color(0.192157, 0.290196, 0.419608, 1)
+border_width_bottom = 2
+border_color = Color(0.341176, 0.588235, 0.901961, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_main_screen_hover"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 1.0
+bg_color = Color(0.188235, 0.188235, 0.188235, 1)
+border_width_bottom = 1
+border_color = Color(0.290196, 0.290196, 0.290196, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_main_screen_normal"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 2.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_split"]
+bg_color = Color(0.105882, 0.105882, 0.105882, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_panel"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_bar"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_unselected"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_hovered"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.188235, 0.188235, 0.188235, 1)
+border_width_bottom = 1
+border_color = Color(0.290196, 0.290196, 0.290196, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_selected"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+border_width_bottom = 2
+border_color = Color(0.341176, 0.588235, 0.901961, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toolbar"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_document_tab"]
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 1.0
+bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+border_width_bottom = 2
+border_color = Color(0.341176, 0.588235, 0.901961, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_canvas"]
+bg_color = Color(0.105882, 0.105882, 0.105882, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_panel"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+border_width_top = 1
+border_color = Color(0.290196, 0.290196, 0.290196, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_tab_bar"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+border_width_top = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_tab_unselected"]
+content_margin_left = 9.0
+content_margin_top = 3.0
+content_margin_right = 9.0
+content_margin_bottom = 3.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_tab_hovered"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 3.0
+bg_color = Color(0.188235, 0.188235, 0.188235, 1)
+border_width_top = 1
+border_color = Color(0.290196, 0.290196, 0.290196, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_tab_selected"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 3.0
+bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+border_width_top = 2
+border_color = Color(0.341176, 0.588235, 0.901961, 1)
+
+[node name="EditorShell" type="Control" unique_id=1166560764]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_editor_shell")
+
+[node name="EditorBackground" type="ColorRect" parent="." unique_id=1499317112]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.105882, 0.105882, 0.105882, 1)
+
+[node name="EditorRoot" type="VBoxContainer" parent="." unique_id=1180451967]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="EditorTitleBar" type="PanelContainer" parent="EditorRoot" unique_id=1138002982]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_title_bar")
+
+[node name="TitleBarRow" type="HBoxContainer" parent="EditorRoot/EditorTitleBar" unique_id=512104485]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MainMenu" type="MenuButton" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=963471489]
+custom_minimum_size = Vector2(58, 30)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+text = "GEL"
+
+[node name="ProjectMenu" type="MenuButton" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1539367972]
+custom_minimum_size = Vector2(72, 30)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_pressed_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+text = "Project"
+
+[node name="EditMenu" type="MenuButton" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1603921324]
+custom_minimum_size = Vector2(58, 30)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_pressed_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+text = "Edit"
+
+[node name="TitleBarLeftSpacer" type="Control" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1533665421]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="EditorMainScreenButtons" type="HBoxContainer" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1377085115]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="NodeMap" type="Button" parent="EditorRoot/EditorTitleBar/TitleBarRow/EditorMainScreenButtons" unique_id=1662109595]
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_pressed_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_main_screen_pressed")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_main_screen_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_main_screen_hover")
+toggle_mode = true
+button_pressed = true
+text = "Node Map"
+
+[node name="Script" type="Button" parent="EditorRoot/EditorTitleBar/TitleBarRow/EditorMainScreenButtons" unique_id=37787226]
+custom_minimum_size = Vector2(80, 30)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.372549, 0.372549, 0.372549, 1)
+theme_override_colors/font_hover_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_disabled_color = Color(0.372549, 0.372549, 0.372549, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_main_screen_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_main_screen_hover")
+disabled = true
+toggle_mode = true
+text = "Script"
+
+[node name="Preview" type="Button" parent="EditorRoot/EditorTitleBar/TitleBarRow/EditorMainScreenButtons" unique_id=1503918426]
+custom_minimum_size = Vector2(80, 30)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.372549, 0.372549, 0.372549, 1)
+theme_override_colors/font_hover_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_disabled_color = Color(0.372549, 0.372549, 0.372549, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_main_screen_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_main_screen_hover")
+disabled = true
+toggle_mode = true
+text = "Preview"
+
+[node name="TitleBarRightSpacer" type="Control" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1804833584]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="ProjectState" type="Label" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=2067421885]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_font_sizes/font_size = 11
+text = "Untitled"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="RendererOption" type="OptionButton" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=186590708]
+custom_minimum_size = Vector2(118, 30)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+flat = true
+selected = 0
+item_count = 2
+popup/item_0/text = "Compatibility"
+popup/item_0/id = 0
+popup/item_1/text = "Forward+"
+popup/item_1/id = 1
+
+[node name="ToggleDocks" type="Button" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1363226677]
+custom_minimum_size = Vector2(68, 30)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_pressed_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+text = "Docks"
+
+[node name="DockHSplitMain" type="HSplitContainer" parent="EditorRoot" unique_id=2064026827]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+theme_override_styles/split_bar_background = SubResource("StyleBoxFlat_split")
+split_offsets = PackedInt32Array(0, 0)
+
+[node name="DockVSplitLeft" type="VSplitContainer" parent="EditorRoot/DockHSplitMain" unique_id=546885633]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+theme_override_styles/split_bar_background = SubResource("StyleBoxFlat_split")
+
+[node name="LeftUpper" type="TabContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft" unique_id=1543648892]
+custom_minimum_size = Vector2(210, 180)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_styles/panel = SubResource("StyleBoxFlat_tab_panel")
+theme_override_styles/tabbar_background = SubResource("StyleBoxFlat_tab_bar")
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_tab_unselected")
+theme_override_styles/tab_hovered = SubResource("StyleBoxFlat_tab_hovered")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_tab_selected")
+current_tab = 0
+drag_to_rearrange_enabled = true
+tabs_rearrange_group = 1
+
+[node name="Scene" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper" unique_id=1981639815]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 0
+
+[node name="SceneContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Scene" unique_id=714495558]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Scene/SceneContent" unique_id=21350036]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Scene"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Scene/SceneContent" unique_id=1437109424]
+layout_mode = 2
+
+[node name="Untitled" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Scene/SceneContent" unique_id=216106916]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "Untitled"
+
+[node name="NoActiveScene" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Scene/SceneContent" unique_id=743499426]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "No active scene"
+
+[node name="SceneFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Scene/SceneContent" unique_id=1267566181]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Import" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper" unique_id=779153694]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 1
+
+[node name="ImportContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Import" unique_id=565918433]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Import/ImportContent" unique_id=1667144815]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Import"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Import/ImportContent" unique_id=697491454]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Import/ImportContent" unique_id=1184743969]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "No pending resources"
+
+[node name="ImportFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftUpper/Import/ImportContent" unique_id=1764227814]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="LeftLower" type="TabContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft" unique_id=415418019]
+custom_minimum_size = Vector2(210, 180)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_styles/panel = SubResource("StyleBoxFlat_tab_panel")
+theme_override_styles/tabbar_background = SubResource("StyleBoxFlat_tab_bar")
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_tab_unselected")
+theme_override_styles/tab_hovered = SubResource("StyleBoxFlat_tab_hovered")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_tab_selected")
+current_tab = 0
+drag_to_rearrange_enabled = true
+tabs_rearrange_group = 1
+
+[node name="FileSystem" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower" unique_id=1356569529]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 0
+
+[node name="FileSystemContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem" unique_id=1684863764]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=653372974]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "FileSystem"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=296803820]
+layout_mode = 2
+
+[node name="Root" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=293795544]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+text = "res://"
+
+[node name="Scenes" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=624520456]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "  scenes/"
+
+[node name="Scripts" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=97633485]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "  scripts/"
+
+[node name="Assets" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=1333865872]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "  assets/"
+
+[node name="FileSystemFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/FileSystem/FileSystemContent" unique_id=595045184]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Favorites" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower" unique_id=1811425867]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 1
+
+[node name="FavoritesContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites" unique_id=1813246874]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=1194972139]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Favorites"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=235748484]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=88670253]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "No favorite paths"
+
+[node name="FavoritesFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Favorites/FavoritesContent" unique_id=844623302]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="CenterRegion" type="VBoxContainer" parent="EditorRoot/DockHSplitMain" unique_id=1407617361]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="DockVSplitCenter" type="VSplitContainer" parent="EditorRoot/DockHSplitMain/CenterRegion" unique_id=366364344]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+theme_override_styles/split_bar_background = SubResource("StyleBoxFlat_split")
+
+[node name="TopWorkspaceSplit" type="VSplitContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter" unique_id=915620345]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+theme_override_styles/split_bar_background = SubResource("StyleBoxFlat_split")
+dragger_visibility = 1
+
+[node name="DocumentTabs" type="PanelContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit" unique_id=1247828826]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_toolbar")
+
+[node name="DocumentTabRow" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs" unique_id=1110410443]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Untitled" type="Button" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow" unique_id=1375177053]
+custom_minimum_size = Vector2(112, 28)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_document_tab")
+text = "Untitled"
+
+[node name="DocumentSpacer" type="Control" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow" unique_id=1266565198]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="DocumentState" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow" unique_id=98979366]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_font_sizes/font_size = 11
+text = "unsaved"
+vertical_alignment = 1
+
+[node name="DocumentOptions" type="Button" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow" unique_id=609533421]
+custom_minimum_size = Vector2(34, 28)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+text = "..."
+flat = true
+
+[node name="MainWorkspace" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit" unique_id=811688369]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="WorkspaceToolbar" type="PanelContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace" unique_id=2041904326]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_toolbar")
+
+[node name="ToolbarRow" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar" unique_id=581419470]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Breadcrumb" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=2119687648]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+text = "Node Map"
+vertical_alignment = 1
+
+[node name="ToolbarSeparator" type="VSeparator" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=1961402639]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+
+[node name="Mode" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=1448158319]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_font_sizes/font_size = 11
+text = "Canvas"
+vertical_alignment = 1
+
+[node name="ToolbarSpacer" type="Control" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=315337739]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="PlaceholderTag" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=1967663701]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.843137, 0.65098, 0.364706, 1)
+theme_override_font_sizes/font_size = 10
+text = "PLACEHOLDER"
+vertical_alignment = 1
+
+[node name="ToggleBottomPanel" type="Button" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=230667544]
+custom_minimum_size = Vector2(96, 28)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+text = "Expand"
+
+[node name="WorkspaceCanvas" type="PanelContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace" unique_id=1372669784]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_canvas")
+
+[node name="CanvasRoot" type="Control" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas" unique_id=522431882]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PlaceholderCanvas" type="Control" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" unique_id=513365866]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_placeholder_canvas")
+
+[node name="CanvasOverlay" type="CenterContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" unique_id=62246052]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="OverlayColumn" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/CanvasOverlay" unique_id=782847045]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/CanvasOverlay/OverlayColumn" unique_id=252133283]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.466667, 0.466667, 0.466667, 1)
+theme_override_font_sizes/font_size = 15
+text = "MAIN WORKSPACE"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/CanvasOverlay/OverlayColumn" unique_id=1478773363]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_font_sizes/font_size = 11
+text = "Canvas boundary preview"
+horizontal_alignment = 1
+
+[node name="EditorBottomPanel" type="TabContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter" unique_id=213043958]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_styles/panel = SubResource("StyleBoxFlat_bottom_panel")
+theme_override_styles/tabbar_background = SubResource("StyleBoxFlat_bottom_tab_bar")
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_bottom_tab_unselected")
+theme_override_styles/tab_hovered = SubResource("StyleBoxFlat_bottom_tab_hovered")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_bottom_tab_selected")
+tabs_position = 1
+deselect_enabled = true
+
+[node name="Output" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=192454488]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 0
+
+[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel/Output" unique_id=96656018]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "Output placeholder  /  messages will appear here"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Problems" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=423985162]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 1
+
+[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel/Problems" unique_id=158901494]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "Problems placeholder  /  no diagnostics"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Debugger" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=1163901890]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 2
+
+[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel/Debugger" unique_id=701585366]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "Debugger placeholder  /  no active session"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DockVSplitRight" type="VSplitContainer" parent="EditorRoot/DockHSplitMain" unique_id=609253492]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+theme_override_styles/split_bar_background = SubResource("StyleBoxFlat_split")
+
+[node name="RightUpper" type="TabContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight" unique_id=1945837648]
+custom_minimum_size = Vector2(210, 180)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_styles/panel = SubResource("StyleBoxFlat_tab_panel")
+theme_override_styles/tabbar_background = SubResource("StyleBoxFlat_tab_bar")
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_tab_unselected")
+theme_override_styles/tab_hovered = SubResource("StyleBoxFlat_tab_hovered")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_tab_selected")
+current_tab = 0
+drag_to_rearrange_enabled = true
+tabs_rearrange_group = 1
+
+[node name="Inspector" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper" unique_id=1301284122]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 0
+
+[node name="InspectorContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector" unique_id=801200243]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector/InspectorContent" unique_id=1543514787]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Inspector"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector/InspectorContent" unique_id=1673430802]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector/InspectorContent" unique_id=1063476133]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "Select an item to inspect"
+
+[node name="InspectorFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector/InspectorContent" unique_id=1948174848]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Node" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper" unique_id=1904876261]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 1
+
+[node name="NodeContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Node" unique_id=1591653385]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Node/NodeContent" unique_id=12050163]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Node"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Node/NodeContent" unique_id=1794107520]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Node/NodeContent" unique_id=1614854165]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "No active selection"
+
+[node name="NodeFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Node/NodeContent" unique_id=1843161344]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="RightLower" type="TabContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight" unique_id=649027610]
+custom_minimum_size = Vector2(210, 180)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_styles/panel = SubResource("StyleBoxFlat_tab_panel")
+theme_override_styles/tabbar_background = SubResource("StyleBoxFlat_tab_bar")
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_tab_unselected")
+theme_override_styles/tab_hovered = SubResource("StyleBoxFlat_tab_hovered")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_tab_selected")
+current_tab = 0
+drag_to_rearrange_enabled = true
+tabs_rearrange_group = 1
+
+[node name="History" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower" unique_id=173635487]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 0
+
+[node name="HistoryContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History" unique_id=1906439696]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=517217836]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "History"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=1034383091]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=568608967]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "No recent edits"
+
+[node name="HistoryFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=1827998680]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Signals" type="MarginContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower" unique_id=1951017438]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+metadata/_tab_index = 1
+
+[node name="SignalsContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/Signals" unique_id=343457179]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/Signals/SignalsContent" unique_id=1783031510]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Signals"
+
+[node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/Signals/SignalsContent" unique_id=556741561]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/Signals/SignalsContent" unique_id=1948531358]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+text = "No active node"
+
+[node name="SignalsFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/Signals/SignalsContent" unique_id=1207751578]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2

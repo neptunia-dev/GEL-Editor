@@ -1,6 +1,15 @@
 extends SceneTree
 
-## Integration helper: emit a real compiler + block-writer result for the engine Lua parser.
+const ConditionBranch = preload("res://node_map/condition/condition_branch.gd")
+const IfWrapper = preload("res://node_map/condition/if_wrapper.gd")
+const SwitchCaseWrapper = preload("res://node_map/condition/switch_case_wrapper.gd")
+const ConditionTree = preload("res://node_map/condition/condition_tree.gd")
+const LuaConditionCompiler = preload("res://node_map/lua/lua_condition_compiler.gd")
+const LuaConditionBlockWriter = preload("res://node_map/lua/lua_condition_block_writer.gd")
+
+## 集成验证辅助脚本：调用真实的条件编译器和区块写入器，生成一份 Lua 文件，
+## 供引擎侧的 Lua 解析器继续执行预编译检查。该脚本只负责验证生成链路，不承担
+## 编辑器工程保存或运行时文件管理职责。
 func _init() -> void:
     var arguments := OS.get_cmdline_user_args()
     if arguments.is_empty():
