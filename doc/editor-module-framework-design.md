@@ -292,10 +292,10 @@ Module Private State
     当前目录、过滤文本、工具选项等模块自己的状态（后续）
 ```
 
-Node Map 领域数据继续独立保存：
+新 Node Map 实现后，领域数据应独立保存：
 
 ```text
-SceneMap / SceneNode / RouteEdge / ConditionTree
+NodeMapDocument / NodeGraph / NodeMapNode / NodeLink / SceneNode
 ```
 
 这些数据不能混入模块描述或布局状态。
@@ -339,16 +339,16 @@ editor/modules/<feature>/
 - 模块注册、查询、按类型列出和注销；
 - 注册失败时不污染模块注册表或布局状态；
 - 内容场景和工厂的延迟保存，不创建 UI；
-- 不依赖窗口或 `SceneMap` 的模块测试。
+- 不依赖窗口或 Node Map 领域模型的模块测试。
 
-下一步顺序：
+整体接入顺序（标明当前进度）：
 
 ```text
-模块注册逻辑
+模块注册逻辑（已完成）
         ↓
-EditorShell 静态布局
+EditorShell 静态布局与 Explorer 占位（已完成）
         ↓
-LayoutRenderer
+LayoutRenderer（下一步）
         ↓
 占位模块挂载
         ↓

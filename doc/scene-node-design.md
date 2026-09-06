@@ -1,578 +1,510 @@
-# Scene Node 设计草稿
+# SceneNode 设计
 
-> 状态：已确认、已落地初版
+> 状态：新 Node Map 设计阶段，尚未实现。
 >
-> 当前范围：只实现单个 Scene Node 数据模型，不包含 Godot UI，不实现完整 Graph。
+> `SceneNode` 是一个继承 `SubgraphNode` 的普通画布节点。它出现在项目根图中，代表一个
+> Runtime Scene；双击后可以进入它所拥有的子图，编辑对话、条件、选择和动作节点。
 >
-> 当前实现位于 `node_map/`：`CastMember`、`ExitPort` 和 `SceneNode` 均为不依赖 UI 的 `RefCounted` 类。
->
-> v2：`SceneNode` 已增加可选 `ConditionTree` 装饰数据；当前契约见
-> [条件树设计](condition-tree-design.md)。下文“初版不包含条件”的描述仅作历史设计记录。
->
-> 本目录作为独立 Node Map 代码模块发布，宿主编辑器负责 View、工程读写和测试。
+> 本文只定义 `SceneNode` 的节点契约。文档级所有权、通用端口、连接和复合节点规则见
+> [Node Map 重设计与文件架构](node-map-file-architecture.md)。
 
-## 1. 目标
+## 1. 设计目标
 
-编辑器中的一个 `SceneNode` 表示一个剧情 Scene。
+`SceneNode` 同时具有两个身份：
 
 ```text
-一个 SceneNode
-    -> 一个 Runtime Package Scene
-    -> 一个 main.lua 入口
+RootGraph 中的普通节点
+    -> 可以被移动、复制、连接和删除
+
+SubgraphNode
+    -> 通过 child_graph_id 指向一张 SceneGraph
+    -> 可以展开进入内部流程图
 ```
 
-Node 负责描述当前 Scene 自身的信息，不负责管理其他 Scene 或 Scene 之间的连线。
-
-## 2. 当前不包含的内容
-
-以下内容暂时不属于单个 `SceneNode`：
-
-- 整个剧情图。
-- 其他 Node。
-- Scene 之间的路由连线。
-- 入口 Scene 的全局配置。
-- Lua 脚本的执行状态。
-- 角色的运行时状态。
-- 变量运行时值。
-- Godot 的 `GraphNode` 控件。
-- 任何 Godot UI 或 View。
-- PackageLoader 和 Runtime Package 的导出流程。
-
-## 3. Python 类比
-
-以下代码是 Python 结构类比；实际实现使用 GDScript。
-
-```python
-from dataclasses import dataclass, field
-
-
-@dataclass
-class CastMember:
-    """当前 Scene 中允许使用的角色。"""
-
-    character_id: str
-    role: str | None = None
-    display_name: str | None = None
-
-
-@dataclass
-class ExitPort:
-    """当前 Scene 的一个出口。"""
-
-    port_id: str
-    name: str
-
-
-@dataclass
-class SceneNode:
-    """编辑器中的一个剧情 Scene Node。"""
-
-    # 编辑器内部身份
-    node_id: str
-
-    # 导出到 Runtime Package 的稳定 Scene ID
-    scene_id: str
-
-    # Scene 的显示标题
-    title: str
-
-    # Scene 对应的 Lua 主入口
-    main_script: str
-
-    # 当前 Scene 的角色列表
-    cast: list[CastMember] = field(default_factory=list)
-
-    # 当前 Scene 的出口列表
-    exits: list[ExitPort] = field(default_factory=list)
-
-    # 编辑器画布坐标
-    position: tuple[float, float] = (0, 0)
-```
-
-## 4. 字段设计
-
-### 4.1 `node_id`
-
-```python
-node_id: str
-```
-
-编辑器内部 ID，建议使用 UUID。
-
-用途：
-
-- 在编辑器内部唯一识别 Node。
-- 保存 Node 的位置。
-- 供未来的连线引用。
-- 支持撤销和重做。
-- 修改 `scene_id` 后保持 Node 的编辑器身份不变。
-
-示例：
+它不是一个特殊的路由容器，也不拥有条件树、出口数组或目标 Scene。Scene 的输入和输出
+端口由子图中的接口节点投影到父图。
 
 ```text
-node-550e8400-e29b-41d4-a716-446655440000
+RootGraph
+
+ProjectStart -> SceneNode: Prologue -> SceneNode: Chapter
+                         │
+                         ├── continue
+                         └── retry
+
+SceneGraph(Prologue)
+
+GraphInput: enter -> Dialogue -> If
+                              ├── true  -> GraphOutput: continue
+                              └── false -> GraphOutput: retry
 ```
 
-### 4.2 `scene_id`
-
-```python
-scene_id: str
-```
-
-Runtime Package 中 Scene 的稳定 ID。
-
-示例：
+## 2. 继承关系
 
 ```text
-prologue
-chapter-one
-ending.true
+NodeMapNode
+└── SubgraphNode
+    └── SceneNode
 ```
 
-约束：
+`NodeMapNode` 提供所有画布节点共有的实例身份、布局、输入值、复制、序列化和本地校验
+契约。`SubgraphNode` 只增加子图引用：
 
 ```text
-^[a-z][a-z0-9_.-]*$
+child_graph_id: String
 ```
 
-用途：
+`SceneNode` 不直接持有 `NodeGraph` 对象。`NodeMapDocument` 才是所有图的所有者。
 
-- Runtime Package 的 `scenes[].id`。
-- 路由表中的 Scene 引用。
-- 存档中的 Scene 引用。
-- 引擎日志和诊断信息。
+## 3. 字段设计
 
-修改 `scene_id` 时：
+### 3.1 公共节点字段
+
+这些字段由 `NodeMapNode` 提供，`SceneNode` 不重复声明：
 
 ```text
-node_id 保持不变
-scene_id 改变
+node_id          文档内稳定唯一的节点实例 ID
+node_type        固定为 gel.scene
+node_version     SceneNode 数据版本
+position         根图中的画布位置
+size             根图中的显示尺寸
+collapsed        是否折叠
+locked           是否锁定布局
+enabled          是否允许进入执行编译结果
+title_override   可选的编辑器标题覆盖
+input_values     数据输入的本地值；第一版 Scene 只有 flow 接口，固定为空
 ```
 
-### 4.3 `title`
-
-```python
-title: str
-```
-
-Scene 的显示标题，例如：
+### 3.2 SceneNode 自身字段
 
 ```text
-序章
-第一次相遇
-真结局
+scene_id         Runtime Scene 的稳定 ID
+display_name     编辑器和运行时显示名称
+child_graph_id   SceneGraph 的稳定 ID
 ```
 
-它不参与：
+`scene_id` 与 `node_id` 必须分离：
 
-- 路由查找。
-- 存档引用。
-- Lua 文件定位。
+- `node_id` 识别编辑器中的节点实例。
+- `scene_id` 识别 Runtime 中的场景。
+- 修改 `scene_id` 不改变节点位置、父图连接或 `node_id`。
+- `scene_id` 在整个文档中必须唯一。
 
-待确认：
+`display_name` 只用于显示和诊断，不参与连接身份。父图端口的显示名称来自子图接口的
+`display_name`，接口身份使用稳定 `interface_id`。
 
-- 标题是否允许为空？
-- 标题为空时是否自动显示 `scene_id`？
-- 标题是否需要长度限制？
+### 3.3 不属于 SceneNode 的字段
 
-### 4.4 `main_script`
-
-```python
-main_script: str
-```
-
-Scene 的 Lua 主入口路径。
-
-示例：
+以下数据不再放进 `SceneNode`：
 
 ```text
-scenes/prologue/main.lua
+独立的出口列表或条件树
+目标 Scene 或父图连接
+SceneGraph 对象本身
+手写 main.lua 路径
+运行时变量、角色状态和执行栈
+Godot GraphNode 控件
 ```
 
-约束：
+Scene 的运行脚本是子图编译结果，由导出器按照 Runtime Package 规则生成。节点模型不
+读取文件，也不保存编译后的 Lua 文本。
 
-- 必须是包内相对路径。
-- 必须位于 `scenes/` 目录下。
-- 文件名必须是 `main.lua`。
-- 一个 Scene 只有一个主入口。
+## 4. Scene 子图接口
 
-新建 Node 时可以根据 `scene_id` 生成默认路径：
+### 4.1 输入接口
+
+第一版每个 SceneGraph 必须有且只有一个入口：
 
 ```text
-scenes/<scene_id>/main.lua
+GraphInputNode
+├── interface_id = enter
+├── display_name = Enter
+└── out: flow output -> SceneGraph 内部第一个节点
 ```
 
-但生成之后，`main_script` 仍然是 Node 中明确保存的字段。
+从父图看，`SceneNode` 暴露一个 `enter` 输入端口。根图的 `ProjectStartNode` 或其他
+SceneNode 可以连接到它。
 
-建议的改名行为：
+`enter` 是保留接口 ID，不是从显示名称推导的文本。它投影为父图 flow 输入，允许多条
+来自不同前驱的连接；内部 `out` 端口最多连接一个后继，不能混用外部和内部端口 ID。
+
+### 4.2 输出接口
+
+SceneGraph 可以有多个命名出口：
 
 ```text
-scene_id 改名
-    -> main_script 默认不自动修改
+GraphOutputNode(interface_id=interface-7f2c, display_name=Continue)
+GraphOutputNode(interface_id=interface-a93d, display_name=Retry)
 ```
 
-原因：Scene ID 和脚本路径在 Runtime Package 设计中是两个独立字段。
-
-待确认：
-
-- 是否允许用户手动修改 `main_script`？
-- 是否提供“同步 Scene ID 和脚本路径”的操作？
-- 是否允许脚本路径暂时指向不存在的文件？
-
-### 4.5 `cast`
-
-```python
-cast: list[CastMember]
-```
-
-表示当前 Scene 允许引用哪些角色。
-
-示例：
-
-```python
-cast = [
-    CastMember(
-        character_id="alice",
-        role="女主角",
-        display_name="爱丽丝",
-    ),
-]
-```
-
-`CastMember` 的字段：
-
-```python
-character_id: str
-role: str | None
-display_name: str | None
-```
-
-Node 自身可以检查：
-
-- `character_id` 不能为空。
-- 同一个 Node 中不能重复出现相同的 `character_id`。
-- `role` 可以为空。
-- `display_name` 可以为空。
-
-Node 不负责检查：
-
-- `character_id` 是否存在于整个工程的角色注册表。
-- 角色的立绘是否存在。
-- 角色资源是否有效。
-
-这些属于项目级或导出级校验。
-
-### 4.6 `exits`
-
-```python
-exits: list[ExitPort]
-```
-
-表示当前 Scene 可以返回的本地出口。
-
-示例：
-
-```python
-exits = [
-    ExitPort(port_id="exit-001", name="continue"),
-    ExitPort(port_id="exit-002", name="retry"),
-]
-```
-
-`ExitPort` 的字段：
-
-```python
-port_id: str
-name: str
-```
-
-`port_id` 是编辑器内部的稳定端口 ID，建议使用 UUID。
-
-`name` 是运行时使用的本地出口名称。
-
-### 为什么出口需要 `port_id`
-
-如果只保存字符串：
-
-```python
-exits = ["continue", "retry"]
-```
-
-编辑器连线只能引用出口名称。
-
-如果用户把出口改名：
+每个出口节点至少有：
 
 ```text
-continue -> proceed
+interface_id    子图内稳定唯一的接口 ID，也是父图 port_id
+display_name    显示名称
+order           显示顺序，不参与连接身份
+in              固定对内 flow 输入端口，允许多个前驱
 ```
 
-连线就需要额外处理。
+修改 `display_name` 不会改变 `interface_id`，所以父图连接保持不变。输入和输出的
+interface_id 共用子图命名空间，输出不能占用保留值 `enter`。
 
-使用稳定端口 ID 后：
+父图看到的 SceneNode 输出端口是 `GraphOutputNode` 的只读投影：
 
 ```text
-port_id: exit-001
-name: continue
+SceneNode output port
+    port_id     = GraphOutputNode.interface_id
+    display_name = GraphOutputNode.display_name
+    kind        = flow
+    max_connections = 1
 ```
 
-改名后：
+`SceneNode` 不缓存这份投影。`NodeMapDocument` 或独立的接口解析器在需要时从
+`child_graph_id` 读取子图并计算当前接口。
+
+第一版 Scene 不开放 data 接口或多个入口。每个对外输出在导出时必须恰好连接一个目标
+Scene；未连线的出口是草稿错误，不表示故事结束。`EndStoryNode` 才表示剧情结束，它
+没有输出端口，不投影为 Scene 的公开接口，因此结局 Scene 可以完全没有命名出口。
+
+### 4.3 接口变更
+
+修改、删除或复制接口时必须保持 ID 规则：
 
 ```text
-port_id: exit-001
-name: proceed
+修改 display_name
+    -> 保留 interface_id
+    -> 父图连接不变
+
+删除 GraphOutputNode
+    -> 删除父图中引用该 interface_id 的 NodeLink
+    -> 删除子图内部相关 NodeLink
+    -> 原子提交
+
+复制 SceneNode
+    -> 复制子图和接口节点
+    -> 保留固定入口 enter，为输出接口生成新的 interface_id
+    -> 不复制原 Scene 在父图中的 NodeLink
 ```
 
-编辑器仍然知道这是同一个出口。
+不能用出口显示名称、数组顺序或隐藏字符串拼接结果作为接口身份。
 
-导出 Runtime Package 时，才去掉 `port_id`：
+接口类型、方向或连接数变更先检查所有内部和父图连接；不兼容时默认拒绝整个操作。
+只有明确包含断线的文档命令才能清理这些连接。第一版 Scene 的 flow 边界类型不可编辑。
+
+## 5. SceneNode 端口
+
+SceneNode 的端口按来源分为两类：
+
+```text
+输入端口
+    SceneGraph 的 GraphInputNode 投影
+
+输出端口
+    SceneGraph 的 GraphOutputNode 投影
+```
+
+第一版的固定形态是：
+
+```text
+input:
+    enter: flow
+
+outputs:
+    由子图中的 GraphOutputNode 动态决定
+```
+
+端口的 `port_id` 必须稳定；端口的显示文本可以编辑。父图的 `NodeLink` 仍然使用统一
+格式：
+
+```text
+source_node_id
+source_port_id
+target_node_id
+target_port_id
+```
+
+父图连接只能连接到 SceneNode 的公开端口，不能直接连接到 SceneGraph 的内部节点。
+
+## 6. SceneNode 的本地校验
+
+`SceneNode.validate_self()` 只检查自身字段：
+
+- `node_id` 非空且格式合法。
+- `node_type` 为 `gel.scene`。
+- `node_version` 是受支持的正整数。
+- `scene_id` 非空且符合 Runtime ID 规则。
+- `display_name` 满足标题规则。
+- `child_graph_id` 非空。
+- `position` 和 `size` 为有限数值。
+- 第一版只有 flow 接口，因此 `input_values` 必须为空。
+
+以下结构检查属于 `NodeMapDocument` 或由文档提供端口快照的 `NodeGraph`：
+
+- `scene_id` 是否和其他 SceneNode 重复。
+- `child_graph_id` 是否存在。
+- 子图是否由当前 SceneNode 唯一拥有。
+- 子图入口是否唯一、接口 ID 是否冲突。
+- 父图连接的端口是否仍然存在。
+- 根图和子图之间是否存在非法跨图连接。
+
+SceneGraph 的终点可达性、必需输入、公开出口路由完整性属于导出校验，不阻止保存
+结构完整的编辑草稿。未来 Scene 支持 data 接口后，由文档解析子图再校验对应输入值，
+SceneNode 不能为了本地校验而持有或自行查询子图。
+
+## 7. SceneGraph 最低结构
+
+第一版 SceneGraph 的结构约束：
+
+```text
+一个 GraphInputNode(interface_id = enter)
+零个或多个 GraphOutputNode
+零个或多个业务节点
+```
+
+允许的内部业务节点包括：
+
+```text
+DialogueNode
+IfNode
+ChoiceNode
+EndStoryNode
+SetVariableNode
+GetVariableNode
+```
+
+它们全部继承 `NodeMapNode`，通过 `NodeLink` 连接。`IfNode` 本身就是一个普通节点：
+
+```text
+IfNode
+├── in: flow input
+├── condition: data<boolean> input
+├── true: flow output
+└── false: flow output
+```
+
+创建命令会同时创建入口、默认输出接口及其内部连线。用户可以把输出替换为
+`EndStoryNode`，表示不再进入下一个 Scene。编辑过程允许临时断线和缺少终点；导出时
+每个可达流程节点必须存在到出口或剧情终点的路径，每条分支也必须完整。
+
+SceneGraph 可以包含 flow 循环，导出时拒绝可达且没有任何终点路径的封闭循环；数据
+依赖不允许循环。多个 flow 前驱进入同一输入表示多条可选执行路径，不是并行汇合。
+
+## 8. SceneNode 的操作契约
+
+以下是接口签名示意，不是可直接运行的 GDScript。`SceneNode` 的本地 API 用于构建
+脱离文档的候选数据；已经插入文档的实例不能绕过聚合根修改：
+
+```gdscript
+func set_scene_id(new_scene_id: String) -> bool
+func set_display_name(new_display_name: String) -> bool
+func validate_self() -> Array
+func duplicate_node() -> NodeMapNode
+func serialize_data() -> Dictionary
+```
+
+涉及父图、子图或连接的操作必须由 `NodeMapDocument` 提供：
+
+```gdscript
+func create_scene_node(scene_id: String) -> Dictionary
+func update_scene(node_id: String, changes: Dictionary) -> Dictionary
+func duplicate_scene_node(node_id: String, new_scene_id: String) -> Dictionary
+func delete_scene_node(node_id: String) -> Dictionary
+func get_child_graph_id(scene_node_id: String) -> String
+func connect_nodes(graph_id: String, link: NodeLink) -> Dictionary
+```
+
+变更结果统一包含 `success`、`diagnostics`，成功时附新建 ID 和前后快照。创建 Scene
+总是插入根图；`update_scene` 只允许名称、业务 ID、布局等受控字段，不允许直接替换
+child_graph_id。子图引用只能由文档生命周期操作设置并同时维护 `owner_node_id`。
+
+`duplicate_node()` 只返回脱离文档且 child_graph_id 为空的副本草稿，不完成 Scene
+深复制。`duplicate_scene_node()` 才能创建拥有独立子图的有效 Scene。查询子图 ID
+没有导航副作用，实际打开画布由 Workspace 处理，不能返回可被绕过文档修改的图句柄。
+
+## 9. 复制和删除
+
+### 9.1 复制 SceneNode
+
+复制应作为一个文档级原子操作：
+
+```text
+原 SceneNode
+    -> 新 node_id
+    -> 新 scene_id，或由调用方提供唯一 scene_id
+    -> 新 child_graph_id
+    -> 深复制 SceneGraph 内所有节点
+    -> 深复制 SceneGraph 内所有 NodeLink
+    -> 重映射子图节点 ID 和连接 ID
+    -> 保留 enter 和固定对内端口，为输出接口生成新 ID
+    -> 保留业务数据和画布布局
+    -> 不复制父图中的连接
+```
+
+复制后的 Scene 不能继续引用原 Scene 的子图或内部节点对象。接口 ID 只要求子图内唯一，
+保留固定入口 enter 不会共享状态；普通输出分配新 ID，防止后续批量复制误用旧身份。
+复制只更新已声明的 ID 引用，不替换台词或任意业务字符串中的同名文本。
+
+### 9.2 删除 SceneNode
+
+删除应由 `NodeMapDocument` 协调：
+
+```text
+删除父图中的 SceneNode
+    -> 删除父图相关 NodeLink
+    -> 删除 child_graph_id 对应 SceneGraph
+    -> 删除子图内部所有节点和连接
+    -> 保留根入口并检查其他子图的所有权
+    -> 一次性提交
+```
+
+删除失败时，文档及其连接必须保持原状。
+
+允许删除最后一个 Scene，根图只保留 ProjectStartNode，成为不可导出的空白草稿。
+删除入口连线或出口后产生的流程缺口由导出诊断提示，不能为了保持连通而阻止正常编辑。
+撤销删除应恢复原 ID 和连接，不能用创建新 Scene 的命令代替恢复。
+
+## 10. 编辑器数据示例
+
+以下记录属于同一示例的片段，不是完整文档。容器格式和加载规则见
+[Node Map 序列化格式](node-map-file-architecture.md#9-序列化格式)。
 
 ```json
 {
-  "exits": ["proceed", "retry"]
-}
-```
-
-出口数组的顺序表示显示顺序，因此暂时不需要单独的 `order` 字段。
-
-Node 不保存出口的目标 Scene：
-
-```python
-# 不放在 SceneNode 中
-source_scene_id
- target_scene_id
- route
- connection
-```
-
-出口定义属于 Node，目标关系属于未来的 Graph/Edge 对象。
-
-待确认：
-
-- 出口名称是否需要遵循特定格式？
-- 是否允许出口名称包含空格或中文？
-- 删除出口时，未来是否由 Graph 自动删除对应连线？
-- 是否允许没有出口的 Scene？
-
-### 4.7 `position`
-
-```python
-position: tuple[float, float]
-```
-
-Node 在编辑器画布中的坐标。
-
-示例：
-
-```python
-position = (120, 80)
-```
-
-这个字段只属于编辑器工程，不进入 Runtime Package。
-
-暂时不保存：
-
-- Node 的选中状态。
-- Node 的悬停状态。
-- Node 的 Godot 控件引用。
-- Node 的连线。
-- Node 的撤销历史。
-
-待确认：
-
-- 是否需要保存 Node 尺寸？
-- 是否需要保存折叠状态？
-- 是否需要保存节点颜色？
-- 是否需要保存注释？
-
-## 5. SceneNode 的职责
-
-单个 Node 可以负责：
-
-- 保存自身的 Scene 数据。
-- 修改 `scene_id`。
-- 修改 `title`。
-- 修改 `main_script`。
-- 添加角色。
-- 删除角色。
-- 修改角色在当前 Scene 中的局部信息。
-- 添加出口。
-- 删除出口。
-- 重命名出口。
-- 调整出口顺序。
-- 保存自身的画布位置。
-- 检查自身字段是否合法。
-- 转换为 Runtime Package 所需的 Scene 定义。
-
-## 6. SceneNode 不负责的职责
-
-以下职责留给更高层对象：
-
-| 职责 | 未来所属对象 |
-| --- | --- |
-| 管理所有 Scene Node | `StoryGraph` 或 `Project` |
-| 检查多个 Node 的 `scene_id` 是否重复 | `StoryGraph` 或 `Project` |
-| 创建和删除连线 | `StoryGraph` 或 `RouteGraph` |
-| 判断入口 Scene | `Project` 或 `StoryGraph` |
-| 检查 Scene 是否可达 | `StoryGraph` |
-| 检查角色 ID 是否存在 | `Project` |
-| 生成完整 `manifest.json` | `Exporter` |
-| 执行 Lua | Runtime Engine |
-| 绘制 Godot 控件 | 宿主工程的 View 层 |
-
-## 7. 建议的方法
-
-以下方法只处理 Node 自己的数据。
-
-```python
-class SceneNode:
-    ...
-
-    def rename_scene(self, new_scene_id: str) -> bool:
-        """修改当前 Scene 的稳定 ID；失败时通过 last_error 返回原因。"""
-        pass
-
-    def set_title(self, title: str) -> bool:
-        """修改 Scene 显示标题。"""
-        pass
-
-    def set_main_script(self, path: str) -> bool:
-        """修改 Lua 主入口路径；失败时通过 last_error 返回原因。"""
-        pass
-
-    def add_cast_member(self, member: CastMember) -> None:
-        """添加一个场景角色绑定。"""
-        pass
-
-    def remove_cast_member(self, character_id: str) -> None:
-        """删除一个场景角色绑定。"""
-        pass
-
-    def add_exit(self, port: ExitPort) -> None:
-        """添加一个 Scene 出口。"""
-        pass
-
-    def rename_exit(self, port_id: str, new_name: str) -> None:
-        """修改出口名称，但保持 port_id 不变。"""
-        pass
-
-    def remove_exit(self, port_id: str) -> None:
-        """删除一个出口。"""
-        pass
-
-    def move_exit(self, port_id: str, new_index: int) -> None:
-        """调整出口显示顺序。"""
-        pass
-
-    def validate_self(self) -> list[str]:
-        """只检查当前 Node 的本地数据。"""
-        pass
-
-    def to_runtime_scene(self) -> dict:
-        """转换为 Runtime Package 中的 Scene 定义。"""
-        pass
-```
-
-## 8. 本地校验范围
-
-`validate_self()` 建议检查：
-
-- `node_id` 不为空。
-- `scene_id` 符合 Scene ID 格式。
-- `title` 符合标题规则。
-- `main_script` 是合法的 Scene 主入口路径。
-- `cast` 中没有重复的 `character_id`。
-- `cast` 中的文本字段满足空值规则。
-- `exits` 中没有重复的 `port_id`。
-- `exits` 中没有重复的出口名称。
-- 出口名称不为空。
-- 出口顺序有效。
-
-不在本地校验范围内：
-
-- `scene_id` 是否和其他 Node 重复。
-- 角色 ID 是否存在。
-- Lua 文件是否实际存在。
-- Lua 文件是否可以编译。
-- 出口是否连接了目标 Scene。
-- 出口是否遗漏路由。
-
-## 9. 编辑器工程数据示例
-
-```json
-{
-  "nodeId": "node-001",
-  "sceneId": "prologue",
-  "title": "序章",
-  "mainScript": "scenes/prologue/main.lua",
-  "cast": [
-    {
-      "characterId": "alice",
-      "role": "女主角",
-      "displayName": "爱丽丝"
-    }
-  ],
-  "exits": [
-    {
-      "portId": "exit-001",
-      "name": "continue"
-    },
-    {
-      "portId": "exit-002",
-      "name": "retry"
-    }
-  ],
-  "position": {
-    "x": 120,
-    "y": 80
+  "id": "scene-prologue",
+  "type": "gel.scene",
+  "version": 1,
+  "position": {"x": 160, "y": 100},
+  "size": {"x": 300, "y": 180},
+  "ui": {
+    "collapsed": false,
+    "locked": false,
+    "titleOverride": ""
+  },
+  "enabled": true,
+  "inputs": {},
+  "data": {
+    "sceneId": "prologue",
+    "displayName": "序章",
+    "childGraphId": "graph-scene-prologue"
   }
 }
 ```
 
-## 10. Runtime Package 导出结果
-
-同一个 Node 导出为 Runtime Package 中的 Scene：
+对应子图接口节点：
 
 ```json
 {
-  "id": "prologue",
-  "title": "序章",
-  "mainScript": "scenes/prologue/main.lua",
-  "cast": [
-    {
-      "characterId": "alice",
-      "role": "女主角",
-      "displayName": "爱丽丝"
-    }
-  ],
-  "exits": [
-    "continue",
-    "retry"
-  ]
+  "id": "output-prologue-retry",
+  "type": "gel.graph_output",
+  "version": 1,
+  "position": {"x": 720, "y": 260},
+  "size": {"x": 220, "y": 100},
+  "ui": {
+    "collapsed": false,
+    "locked": false,
+    "titleOverride": ""
+  },
+  "enabled": true,
+  "inputs": {},
+  "data": {
+    "interfaceId": "interface-a93d",
+    "displayName": "重试",
+    "order": 0
+  }
 }
 ```
 
-导出时不包含以下编辑器字段：
+对应根图连接：
 
-```text
-node_id
-exits[].port_id
-position
+```json
+{
+  "linkId": "link-scene-retry",
+  "sourceNodeId": "scene-prologue",
+  "sourcePortId": "interface-a93d",
+  "targetNodeId": "scene-prologue",
+  "targetPortId": "enter"
+}
 ```
 
-## 11. 当前待确认问题
+这里的 `interface-a93d` 是接口 ID，不是显示名称；父图连接表示重新进入当前 Scene。
+若显示名称从“重试”改为“再试一次”，连接不需要改动。
 
-请直接在本文件中修改或补充：
+## 11. Runtime 转换边界
 
-- [ ] `title` 是否允许为空？
-- [ ] `title` 是否需要最大长度？
-- [ ] `main_script` 是否允许手动修改？
-- [ ] 修改 `scene_id` 时是否始终保持 `main_script` 不变？
-- [ ] `CastMember` 是否还需要其他字段？
-- [ ] 出口名称是否需要格式限制？
-- [ ] 出口名称是否允许重复？当前设计是不允许。
-- [ ] 出口删除后，连线由谁处理？
-- [ ] 是否需要一个默认输入端口？
-- [ ] 是否需要保存 Node 尺寸？
-- [ ] 是否需要保存折叠状态、颜色和注释？
-- [ ] `position` 是否使用 Godot 的 `Vector2` 概念？
-- [ ] 是否需要给 Node 增加版本字段？
+SceneNode 不直接生成 Runtime 数据。编译流程由文档和导出器完成：
+
+```text
+SceneNode.scene_id
+    -> Runtime Scene ID
+
+SceneGraph
+    -> Scene 的运行时控制流和数据流 IR
+
+GraphOutputNode.interface_id
+    -> Scene.exits 和 ctx.flow:exit(interface_id)
+
+EndStoryNode
+    -> ctx.flow:end_story()，不声明命名出口
+
+RootGraph NodeLink
+    -> Runtime Scene 之间的路由
+```
+
+导出器生成对应 Runtime Scene、显式 `mainScript` 和脚本内容。接口 ID 会作为稳定
+出口键进入 Runtime；编辑器的 `node_id`、`graph_id`、`link_id` 和布局仅用于源映射，
+不作为运行协议必需字段。每个已声明出口必须有恰好一个目标路由，结局 Scene 可以
+导出 `exits: []` 并由 `EndStoryNode` 结束。
+
+`cast` 仍遵守 Runtime 的舞台操作白名单规则，由编译器从静态舞台角色引用收集；第一版
+没有舞台节点时可以为空。详细 IR、路由和角色规则见
+[Node Map 编译边界](node-map-file-architecture.md#11-编译边界)。
+
+## 12. 与 UI 的边界
+
+SceneNode 是纯 `RefCounted` 模型，不继承 Godot `GraphNode`。视图层可以：
+
+- 显示 Scene 的 `display_name` 和 `scene_id`。
+- 根据解析后的 `GraphInterface` 绘制输入/输出端口。
+- 把拖动位置写入文档命令。
+- 响应双击并请求 Workspace 打开 `child_graph_id`。
+- 显示子图入口和出口的连接状态。
+
+视图层不能：
+
+- 自己维护一份 SceneGraph。
+- 自己决定接口是否存在。
+- 直接修改 `NodeMapDocument` 的内部字典。
+- 把当前进入的子图和导航栈写入 SceneNode；画布节点自身的 collapsed 仍是持久布局字段。
+- 直接执行 Lua 或修改 Runtime 状态。
+
+## 13. 测试重点
+
+`SceneNode` 的纯模型测试应覆盖：
+
+- 公共字段和 `gel.scene` 类型 ID。
+- `scene_id`、`display_name`、`child_graph_id` 的本地校验。
+- 节点复制时不共享可变数据。
+- SceneNode 序列化不包含 NodeLink 和 Godot UI 引用。
+- 子图接口投影生成稳定的父图端口。
+- 修改接口显示名称不会破坏父图连接。
+- 删除输出接口会原子清理父图连接。
+- 复制 Scene 会重映射子图节点、连接和输出接口 ID，保留 enter 及固定对内端口。
+- 删除 Scene 会删除完整子图且不会留下孤儿图。
+- 非法跨图连接被拒绝。
+- 未完成的图可保存但不能导出，未连接出口不被隐式编译为结局。
+- EndStoryNode 生成剧情终点，无输出的结局 Scene 可以导出。
+- 失败变更不污染原文档，撤销恢复完整子图和原身份。
+
+## 14. 当前结论
+
+```text
+SceneNode
+    extends SubgraphNode
+    appears as a normal node in RootGraph
+    owns no NodeGraph object
+    exposes the interface of its child SceneGraph
+```
+
+`SceneNode` 的最小稳定契约只有 `scene_id`、`display_name` 和 `child_graph_id`，其余
+通用能力来自 `NodeMapNode`，其父图连接由 `NodeMapDocument` 管理，其内部流程由
+`NodeGraph` 管理，编译结果由导出层生成。

@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://workspace/node_map/placeholder_graph_node.gd" id="1"]
+[ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="2"]
+
+[node name="DialoguePreview" type="GraphNode"]
+custom_minimum_size = Vector2(230, 0)
+theme = ExtResource("2")
+title = "Dialogue"
+slot/1/left_enabled = true
+slot/1/left_type = 0
+slot/1/left_color = Color(0.72, 0.80, 0.83, 1)
+slot/1/right_enabled = true
+slot/1/right_type = 0
+slot/1/right_color = Color(0.72, 0.80, 0.83, 1)
+slot/2/left_enabled = true
+slot/2/left_type = 3
+slot/2/left_color = Color(0.61, 0.75, 0.48, 1)
+slot/3/left_enabled = true
+slot/3/left_type = 2
+slot/3/left_color = Color(0.52, 0.72, 0.90, 1)
+script = ExtResource("1")
+accent = Color(0.52, 0.72, 0.90, 1)
+
+[node name="Kind" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.72, 0.90, 1)
+theme_override_font_sizes/font_size = 11
+text = "DIALOGUE"
+
+[node name="Flow" type="HBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Input" type="Label" parent="Flow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "in"
+
+[node name="Output" type="Label" parent="Flow"]
+layout_mode = 2
+text = "next"
+
+[node name="Speaker" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.79, 1)
+text = "speaker: Mira"
+
+[node name="Text" type="Label" parent="."]
+custom_minimum_size = Vector2(202, 65)
+layout_mode = 2
+text = "The last train is waiting.\nAre you ready to leave?"
+autowrap_mode = 3

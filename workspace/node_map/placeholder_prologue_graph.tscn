@@ -1,0 +1,129 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_graph.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_boundary_node.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_dialogue_node.tscn" id="3"]
+[ext_resource type="Script" path="res://workspace/node_map/placeholder_graph_node.gd" id="4"]
+
+[node name="PrologueGraph" instance=ExtResource("1")]
+connections = [{"from_node": &"Entry", "from_port": 0, "to_node": &"Dialogue", "to_port": 0, "keep_alive": false}, {"from_node": &"Dialogue", "from_port": 0, "to_node": &"If", "to_port": 0, "keep_alive": false}, {"from_node": &"Variable", "from_port": 0, "to_node": &"If", "to_port": 1, "keep_alive": false}, {"from_node": &"If", "from_port": 0, "to_node": &"Continue", "to_port": 0, "keep_alive": false}, {"from_node": &"If", "from_port": 1, "to_node": &"Retry", "to_port": 0, "keep_alive": false}]
+
+[node name="Entry" parent="." instance=ExtResource("2")]
+position_offset = Vector2(20, 150)
+title = "Enter"
+
+[node name="Dialogue" parent="." instance=ExtResource("3")]
+position_offset = Vector2(240, 150)
+title = "The Last Train"
+
+[node name="If" type="GraphNode" parent="."]
+custom_minimum_size = Vector2(210, 0)
+position_offset = Vector2(540, 150)
+title = "Has Ticket?"
+slot/1/left_enabled = true
+slot/1/left_type = 0
+slot/1/left_color = Color(0.72, 0.80, 0.83, 1)
+slot/1/right_enabled = true
+slot/1/right_type = 0
+slot/1/right_color = Color(0.72, 0.80, 0.83, 1)
+slot/2/left_enabled = true
+slot/2/left_type = 1
+slot/2/left_color = Color(0.91, 0.70, 0.40, 1)
+slot/2/right_enabled = true
+slot/2/right_type = 0
+slot/2/right_color = Color(0.72, 0.80, 0.83, 1)
+script = ExtResource("4")
+accent = Color(0.91, 0.70, 0.40, 1)
+
+[node name="Kind" type="Label" parent="If"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.70, 0.40, 1)
+theme_override_font_sizes/font_size = 11
+text = "IF"
+
+[node name="Flow" type="HBoxContainer" parent="If"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Input" type="Label" parent="If/Flow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "in"
+
+[node name="True" type="Label" parent="If/Flow"]
+layout_mode = 2
+text = "true"
+
+[node name="Condition" type="HBoxContainer" parent="If"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Input" type="Label" parent="If/Condition"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.91, 0.70, 0.40, 1)
+text = "condition"
+
+[node name="False" type="Label" parent="If/Condition"]
+layout_mode = 2
+text = "false"
+
+[node name="Variable" type="GraphNode" parent="."]
+custom_minimum_size = Vector2(230, 0)
+position_offset = Vector2(240, 440)
+title = "Get Variable"
+slot/2/right_enabled = true
+slot/2/right_type = 1
+slot/2/right_color = Color(0.91, 0.70, 0.40, 1)
+script = ExtResource("4")
+accent = Color(0.91, 0.70, 0.40, 1)
+
+[node name="Kind" type="Label" parent="Variable"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.70, 0.40, 1)
+theme_override_font_sizes/font_size = 11
+text = "VARIABLE / BOOLEAN"
+
+[node name="Key" type="Label" parent="Variable"]
+layout_mode = 2
+text = "has_ticket"
+
+[node name="Value" type="Label" parent="Variable"]
+layout_mode = 2
+text = "value"
+horizontal_alignment = 2
+
+[node name="Continue" parent="." instance=ExtResource("2")]
+position_offset = Vector2(840, 150)
+title = "Continue"
+slot/1/left_enabled = true
+slot/1/left_type = 0
+slot/1/left_color = Color(0.72, 0.80, 0.83, 1)
+slot/1/right_enabled = false
+accent = Color(0.46, 0.74, 0.69, 1)
+
+[node name="Kind" parent="Continue" index="0"]
+text = "GRAPH OUTPUT"
+
+[node name="Port" parent="Continue" index="1"]
+text = "in"
+horizontal_alignment = 0
+
+[node name="Retry" parent="." instance=ExtResource("2")]
+position_offset = Vector2(840, 410)
+title = "Retry"
+slot/1/left_enabled = true
+slot/1/left_type = 0
+slot/1/left_color = Color(0.72, 0.80, 0.83, 1)
+slot/1/right_enabled = false
+accent = Color(0.46, 0.74, 0.69, 1)
+
+[node name="Kind" parent="Retry" index="0"]
+text = "GRAPH OUTPUT"
+
+[node name="Port" parent="Retry" index="1"]
+text = "in"
+horizontal_alignment = 0
+
+[editable path="Continue"]
+[editable path="Retry"]

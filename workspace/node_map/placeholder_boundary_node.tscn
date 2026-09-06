@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://workspace/node_map/placeholder_graph_node.gd" id="1"]
+[ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="2"]
+
+[node name="BoundaryPreview" type="GraphNode"]
+custom_minimum_size = Vector2(160, 0)
+theme = ExtResource("2")
+title = "Entry"
+slot/1/right_enabled = true
+slot/1/right_type = 0
+slot/1/right_color = Color(0.72, 0.80, 0.83, 1)
+script = ExtResource("1")
+accent = Color(0.66, 0.76, 0.46, 1)
+
+[node name="Kind" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.67, 0.70, 1)
+theme_override_font_sizes/font_size = 11
+text = "GRAPH INPUT"
+
+[node name="Port" type="Label" parent="."]
+layout_mode = 2
+text = "out"
+horizontal_alignment = 2

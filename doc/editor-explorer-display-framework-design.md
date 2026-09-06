@@ -28,7 +28,7 @@ Project
 - `Scenes` 必定是磁盘目录；
 - `prologue` 必定是真实文件夹；
 - `main.lua` 已经存在于操作系统；
-- 当前 Explorer 已经绑定 `SceneMap`；
+- 当前 Explorer 已经绑定 Node Map 文档；
 - GEL 将来一定把该区域接到某一种特定数据源。
 
 ## 2. 当前结构
@@ -125,8 +125,8 @@ EditorExplorerPanel
 未来任选其一时，只替换数据源或适配器：
 
 ```text
-SceneMap Adapter
-    SceneNode -> ExplorerEntry
+Node Map Adapter
+    NodeMapDocument / NodeGraph -> ExplorerEntry
 
 Project Asset Adapter
     Asset registry -> ExplorerEntry
@@ -141,8 +141,8 @@ Mixed Project Adapter
 Explorer 本身不应出现：
 
 ```text
-SceneMap
-SceneNode
+NodeMapDocument
+NodeMapNode
 DirAccess
 FileAccess
 DirectoryFileSystem
@@ -240,7 +240,7 @@ refresh_requested()
 
 当前明确不做：
 
-- 接入 `SceneMap`；
+- 接入 `NodeMapDocument`；
 - 接入真实文件系统；
 - 新建、移动、复制、重命名或删除任何文件；
 - 对 `.lua`、`.rscn`、JSON 或资源进行解析；
@@ -253,7 +253,7 @@ refresh_requested()
 - [x] 打开 `editor_shell.tscn` 能直接看到 Explorer 静态节点；
 - [x] 运行时 Tree 显示占位条目树；
 - [x] Tree 可展开、筛选、选择和刷新；
-- [x] 数据源不依赖 `SceneMap` 或操作系统文件；
+- [x] 数据源不依赖 `NodeMapDocument` 或操作系统文件；
 - [x] metadata 不被显示层解释或搜索；
 - [x] 无效候选树不会污染旧模型；
 - [x] 空间布局测试不需要业务数据；

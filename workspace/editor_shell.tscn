@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://v4rfvvmiou7c"]
 
 [ext_resource type="Script" uid="uid://ctsdlaqak4501" path="res://workspace/editor_shell.gd" id="1_editor_shell"]
-[ext_resource type="Script" uid="uid://nq0100midvqs" path="res://workspace/placeholder_canvas.gd" id="2_placeholder_canvas"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_node_map.tscn" id="2_node_map_preview"]
 [ext_resource type="Script" path="res://workspace/explorer/explorer_tree.gd" id="3_explorer_tree"]
 [ext_resource type="Script" path="res://workspace/explorer/placeholder_explorer_panel.gd" id="4_placeholder_explorer_panel"]
 
@@ -579,7 +579,7 @@ mouse_filter = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 theme_override_font_sizes/font_size = 11
-text = "unsaved"
+text = "preview"
 vertical_alignment = 1
 
 [node name="DocumentOptions" type="Button" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow" unique_id=609533421]
@@ -656,42 +656,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PlaceholderCanvas" type="Control" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" unique_id=513365866]
+[node name="PlaceholderNodeMap" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" instance=ExtResource("2_node_map_preview")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-script = ExtResource("2_placeholder_canvas")
-
-[node name="CanvasOverlay" type="CenterContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" unique_id=62246052]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="OverlayColumn" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/CanvasOverlay" unique_id=782847045]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="Title" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/CanvasOverlay/OverlayColumn" unique_id=252133283]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.466667, 0.466667, 0.466667, 1)
-theme_override_font_sizes/font_size = 15
-text = "MAIN WORKSPACE"
-horizontal_alignment = 1
-
-[node name="Subtitle" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/CanvasOverlay/OverlayColumn" unique_id=1478773363]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-theme_override_font_sizes/font_size = 11
-text = "Canvas boundary preview"
-horizontal_alignment = 1
 
 [node name="EditorBottomPanel" type="TabContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter" unique_id=213043958]
 custom_minimum_size = Vector2(0, 34)

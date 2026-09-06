@@ -1,11 +1,12 @@
 # GEL Editor 工作区框架设计
 
-> 状态：布局管理逻辑已完成，EditorShell 占位 UI 已开始，具体业务 UI 尚未接入。
+> 状态：布局管理逻辑、静态 EditorShell、Explorer 和 Node Map 显示占位已实现；LayoutRenderer 和真实业务模块尚未接入。
 >
 > 本文是在阅读 Godot 4.6 编辑器源码之后整理的 GEL 工作区设计。当前 `editor/`
-> 已保留 Node Map 领域模型，并实现不依赖 Godot Control 的布局拓扑、Dock/Workspace
-> 描述、状态转换和序列化逻辑；在工作区框架通过纯 UI 验收之前，不接入
-> `SceneMap`、`GraphEdit` 或具体编辑功能。
+> 已实现不依赖 Godot Control 的布局拓扑、Dock/Workspace 描述、状态转换和序列化
+> 逻辑；Node Map 正在重设计。在工作区框架通过纯 UI 验收之前，不接入
+> `NodeMapDocument` 或真实业务编辑功能。中央 GraphEdit 仅承载静态演示场景，
+> 用于观察节点显示与基础交互，详见 [Node Map 显示占位](node-map-preview.md)。
 
 ## 1. 设计目标
 
@@ -28,7 +29,7 @@ GEL 需要的是一个可以长期承载编辑器功能的工作区，而不是�
 以下内容不属于第一阶段的工作区框架：
 
 - Scene 创建、删除、连线和 Inspector 业务；
-- SceneMap 的加载和保存；
+- Node Map 文档的加载和保存；
 - Lua 文件写回；
 - 完整的插件系统；
 - 任意 Dock 拖到独立窗口；
@@ -325,12 +326,12 @@ EditorShell (Control)
 - 创建顶部栏、主 Dock 分割和状态栏；
 - 连接 `EditorDockManager`、`EditorWorkspaceManager` 和 `EditorContext`；
 - 提供布局重置、布局保存、布局加载和无干扰模式；
-- 不理解 `SceneMap` 的业务规则。
+- 不理解 `NodeMapDocument` 的业务规则。
 
 不负责：
 
 - 创建 Scene；
-- 验证 RouteEdge；
+- 验证 NodeLink；
 - 修改领域模型；
 - 直接渲染具体 Map 节点。
 
@@ -710,18 +711,18 @@ project.gel.json
 
 内容包括：
 
-- SceneMap；
-- SceneNode；
-- RouteEdge；
-- 条件树；
-- Scene 节点在 Map 中的位置。
+- `NodeMapDocument`；
+- `NodeGraph`；
+- `NodeMapNode` 及其业务字段；
+- `NodeLink`；
+- Scene 子图接口和节点布局。
 
 ### 8.3 严禁混合
 
 ```text
-SceneMap 不保存 Dock 宽度
-SceneNode 不保存当前 Inspector Tab
-RouteEdge 不保存底部面板状态
+NodeMapDocument 不保存 Dock 宽度
+NodeMapNode 不保存当前 Inspector Tab
+NodeLink 不保存底部面板状态
 布局文件不保存 Runtime Package 业务字段
 ```
 
@@ -749,7 +750,7 @@ editor/
 │   └── ...                 # 与 UI 无关的领域模型
 │
 └── tests/
-    ├── run_tests.gd        # 领域模型测试
+    ├── node_map/           # 后续的新节点模型测试
     └── workspace_ui_tests.gd # 后续的纯工作区测试
 ```
 
@@ -772,7 +773,7 @@ editor/
 - 记录 Godot 源码研究结论；
 - 确认 Dock、Workspace、BottomPanel 和 LayoutState 的边界；
 - 不创建业务 UI；
-- 不依赖 SceneMap。
+- 不依赖 `NodeMapDocument`。
 
 ### 阶段 1：布局管理逻辑（已完成）
 
@@ -787,9 +788,9 @@ editor/
 
 该阶段不创建任何 Godot Control，也不依赖 Node Map 领域对象。
 
-### 阶段 2：静态工作区骨架（下一步）
+### 阶段 2：静态工作区骨架（已实现占位 Shell）
 
-只实现布局和占位内容：
+当前只包含静态布局和占位内容，不表示后续 LayoutRenderer 已完成：
 
 - `EditorShell`；
 - 顶部栏；
@@ -836,7 +837,7 @@ editor/
 
 ### 阶段 6：接入 Node Map
 
-最后才把现有领域模型和具体视图接入：
+最后才把 Node Map 领域模型和具体视图接入：
 
 ```text
 MapWorkspace
@@ -892,7 +893,7 @@ Map 视图通过 `EditorContext` 和领域控制器工作，不改变工作区�
 - [ ] 配置缺失字段时使用默认值；
 - [ ] 配置损坏时可以安全回退；
 - [ ] 拖动分隔线不会每帧写盘；
-- [ ] 布局状态没有进入 `SceneMap`。
+- [ ] 布局状态没有进入 `NodeMapDocument`。
 
 ### 依赖边界
 

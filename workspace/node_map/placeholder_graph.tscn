@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://workspace/node_map/placeholder_graph.gd" id="1"]
+[ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="2"]
+
+[node name="PlaceholderGraph" type="GraphEdit"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+grid_pattern = 1
+snapping_distance = 20
+right_disconnects = true
+connection_lines_thickness = 2.5
+minimap_size = Vector2(150, 100)
+minimap_opacity = 0.8
+show_arrange_button = false
+script = ExtResource("1")

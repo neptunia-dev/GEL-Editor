@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_graph.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_boundary_node.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_dialogue_node.tscn" id="3"]
+
+[node name="EndingGraph" instance=ExtResource("1")]
+connections = [{"from_node": &"Entry", "from_port": 0, "to_node": &"Dialogue", "to_port": 0, "keep_alive": false}, {"from_node": &"Dialogue", "from_port": 0, "to_node": &"EndStory", "to_port": 0, "keep_alive": false}]
+
+[node name="Entry" parent="." instance=ExtResource("2")]
+position_offset = Vector2(20, 150)
+title = "Enter"
+
+[node name="Dialogue" parent="." instance=ExtResource("3")]
+position_offset = Vector2(260, 150)
+title = "A New Morning"
+
+[node name="Speaker" parent="Dialogue" index="2"]
+text = "speaker: Narrator"
+
+[node name="Text" parent="Dialogue" index="3"]
+text = "The train reaches the coast\njust before sunrise."
+
+[node name="EndStory" parent="." instance=ExtResource("2")]
+position_offset = Vector2(590, 150)
+title = "End Story"
+slot/1/left_enabled = true
+slot/1/left_type = 0
+slot/1/left_color = Color(0.72, 0.80, 0.83, 1)
+slot/1/right_enabled = false
+accent = Color(0.86, 0.52, 0.57, 1)
+
+[node name="Kind" parent="EndStory" index="0"]
+text = "TERMINAL"
+
+[node name="Port" parent="EndStory" index="1"]
+text = "in"
+horizontal_alignment = 0
+
+[editable path="Dialogue"]
+[editable path="EndStory"]

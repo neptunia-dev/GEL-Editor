@@ -1,0 +1,67 @@
+[gd_resource type="Theme" format=3]
+
+[sub_resource type="StyleBoxFlat" id="Canvas"]
+bg_color = Color(0.09, 0.094, 0.10, 1)
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.165, 0.173, 0.18, 1)
+border_width_left = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.29, 0.30, 0.31, 1)
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="Title"]
+content_margin_left = 14.0
+content_margin_top = 9.0
+content_margin_right = 14.0
+content_margin_bottom = 7.0
+bg_color = Color(0.205, 0.213, 0.22, 1)
+border_width_top = 3
+border_color = Color(0.46, 0.74, 0.69, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+
+[sub_resource type="StyleBoxFlat" id="Button"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.23, 0.24, 0.25, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="Hover"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.30, 0.32, 0.34, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[resource]
+default_font_size = 13
+Button/styles/normal = SubResource("Button")
+Button/styles/hover = SubResource("Hover")
+Button/styles/pressed = SubResource("Hover")
+Button/styles/disabled = SubResource("Button")
+GraphEdit/colors/grid_minor = Color(0.24, 0.25, 0.26, 0.6)
+GraphEdit/colors/grid_major = Color(0.34, 0.35, 0.36, 0.65)
+GraphEdit/styles/panel = SubResource("Canvas")
+GraphEdit/styles/menu_panel = SubResource("Button")
+GraphNode/constants/separation = 8
+GraphNode/styles/panel = SubResource("Panel")
+GraphNode/styles/panel_selected = SubResource("Panel")
+GraphNode/styles/titlebar = SubResource("Title")
+GraphNode/styles/titlebar_selected = SubResource("Title")
+Label/colors/font_color = Color(0.87, 0.88, 0.89, 1)

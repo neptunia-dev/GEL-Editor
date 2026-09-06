@@ -1,0 +1,97 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://workspace/node_map/placeholder_node_map.gd" id="1"]
+[ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="2"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_root_graph.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_prologue_graph.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_chapter_graph.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_ending_graph.tscn" id="6"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/arrow-left.svg" id="7"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/scan.svg" id="8"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/rotate-ccw.svg" id="9"]
+
+[node name="PlaceholderNodeMap" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+theme_override_constants/separation = 0
+script = ExtResource("1")
+
+[node name="Toolbar" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 5
+
+[node name="Row" type="HBoxContainer" parent="Toolbar"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Back" type="Button" parent="Toolbar/Row"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+disabled = true
+tooltip_text = "Back to root graph"
+icon = ExtResource("7")
+
+[node name="Breadcrumb" type="Label" parent="Toolbar/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Root Graph"
+text_overrun_behavior = 3
+
+[node name="FrameAll" type="Button" parent="Toolbar/Row"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+tooltip_text = "Frame all nodes"
+icon = ExtResource("8")
+
+[node name="Reset" type="Button" parent="Toolbar/Row"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+tooltip_text = "Reset current preview"
+icon = ExtResource("9")
+
+[node name="GraphStack" type="MarginContainer" parent="."]
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RootGraph" parent="GraphStack" instance=ExtResource("3")]
+layout_mode = 2
+
+[node name="PrologueGraph" parent="GraphStack" instance=ExtResource("4")]
+visible = false
+layout_mode = 2
+
+[node name="ChapterGraph" parent="GraphStack" instance=ExtResource("5")]
+visible = false
+layout_mode = 2
+
+[node name="EndingGraph" parent="GraphStack" instance=ExtResource("6")]
+visible = false
+layout_mode = 2
+
+[node name="Status" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Counts" type="Label" parent="Status"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61, 0.64, 0.67, 1)
+theme_override_font_sizes/font_size = 11
+text = "4 nodes   4 links"
+horizontal_alignment = 1
+
+[node name="Selection" type="Label" parent="Status"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.61, 0.64, 0.67, 1)
+theme_override_font_sizes/font_size = 11
+text_overrun_behavior = 3
