@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://node_map/editor/scene_graph_node.gd" id="1_view"]
+
+[node name="SceneGraphNode" type="GraphNode"]
+offset_right = 220.0
+offset_bottom = 100.0
+script = ExtResource("1_view")

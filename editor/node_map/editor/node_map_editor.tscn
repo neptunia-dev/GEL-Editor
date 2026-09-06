@@ -1,0 +1,107 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://node_map/editor/node_map_editor.gd" id="1_editor"]
+
+[node name="NodeMapEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_editor")
+
+[node name="Layout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Toolbar" type="HFlowContainer" parent="Layout"]
+layout_mode = 2
+
+[node name="AddNode" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "Add Scene"
+
+[node name="DeleteNode" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "Delete Scene"
+
+[node name="SetEntry" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "Set Entry"
+
+[node name="Validate" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "Validate"
+
+[node name="Save" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "Save"
+
+[node name="Load" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "Load"
+
+
+[node name="DocumentPath" type="LineEdit" parent="Layout/Toolbar"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+placeholder_text = "res://example.gelmap.json"
+
+[node name="GraphEdit" type="GraphEdit" parent="Layout"]
+custom_minimum_size = Vector2(0, 400)
+layout_mode = 2
+size_flags_vertical = 3
+show_grid = true
+snapping_enabled = true
+snapping_distance = 16
+
+[node name="Inspector" type="VBoxContainer" parent="Layout"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="SelectionLabel" type="Label" parent="Layout/Inspector"]
+layout_mode = 2
+text = "No Scene selected"
+
+[node name="SceneId" type="LineEdit" parent="Layout/Inspector"]
+layout_mode = 2
+placeholder_text = "Scene ID"
+
+[node name="Title" type="LineEdit" parent="Layout/Inspector"]
+layout_mode = 2
+placeholder_text = "Title"
+
+[node name="MainScript" type="LineEdit" parent="Layout/Inspector"]
+layout_mode = 2
+placeholder_text = "scenes/example/main.lua"
+
+[node name="ExitRow" type="HBoxContainer" parent="Layout/Inspector"]
+layout_mode = 2
+
+[node name="ExitName" type="LineEdit" parent="Layout/Inspector/ExitRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "New exit name"
+
+[node name="AddExit" type="Button" parent="Layout/Inspector/ExitRow"]
+layout_mode = 2
+text = "Add Exit"
+
+[node name="ExitList" type="VBoxContainer" parent="Layout/Inspector"]
+layout_mode = 2
+
+[node name="Diagnostics" type="RichTextLabel" parent="Layout"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+fit_content = true
+scroll_active = true
+
+[node name="Status" type="Label" parent="Layout"]
+layout_mode = 2
+text = "Ready"
+autowrap_mode = 2
