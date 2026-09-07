@@ -1,0 +1,135 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://workspace/node_map/node_map_editor.gd" id="1"]
+[ext_resource type="Script" path="res://workspace/node_map/node_graph_view.gd" id="2"]
+[ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="3"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/plus.svg" id="4"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/arrow-left.svg" id="5"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/undo-2.svg" id="6"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/redo-2.svg" id="7"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/copy.svg" id="8"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/trash-2.svg" id="9"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/scan.svg" id="10"]
+
+[node name="NodeMapEditor" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3")
+theme_override_constants/separation = 4
+script = ExtResource("1")
+
+[node name="Toolbar" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Back" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Back to root graph"
+icon = ExtResource("5")
+
+[node name="Breadcrumb" type="Label" parent="Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Root Graph"
+text_overrun_behavior = 3
+
+[node name="Add" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Add node"
+icon = ExtResource("4")
+
+[node name="Undo" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+disabled = true
+tooltip_text = "Undo"
+icon = ExtResource("6")
+
+[node name="Redo" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+disabled = true
+tooltip_text = "Redo"
+icon = ExtResource("7")
+
+[node name="Duplicate" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+disabled = true
+tooltip_text = "Duplicate selected nodes"
+icon = ExtResource("8")
+
+[node name="Delete" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+disabled = true
+tooltip_text = "Delete selected nodes"
+icon = ExtResource("9")
+
+[node name="Frame" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Frame all nodes"
+icon = ExtResource("10")
+
+[node name="Graph" type="GraphEdit" parent="."]
+custom_minimum_size = Vector2(280, 240)
+layout_mode = 2
+size_flags_vertical = 3
+grid_pattern = 1
+snapping_distance = 20
+right_disconnects = true
+connection_lines_thickness = 2.5
+minimap_size = Vector2(150, 100)
+minimap_opacity = 0.8
+show_arrange_button = false
+script = ExtResource("2")
+
+[node name="Status" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Counts" type="Label" parent="Status"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.70, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 nodes   0 links"
+
+[node name="Diagnostic" type="Label" parent="Status"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.58, 0.54, 1)
+theme_override_font_sizes/font_size = 11
+text_overrun_behavior = 3
+
+[node name="NodePicker" type="PopupPanel" parent="."]
+title = "Add Node"
+size = Vector2i(340, 360)
+
+[node name="Contents" type="VBoxContainer" parent="NodePicker"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 332.0
+offset_bottom = 352.0
+theme_override_constants/separation = 8
+
+[node name="Search" type="LineEdit" parent="NodePicker/Contents"]
+layout_mode = 2
+placeholder_text = "Search nodes"
+clear_button_enabled = true
+
+[node name="Types" type="ItemList" parent="NodePicker/Contents"]
+layout_mode = 2
+size_flags_vertical = 3
+text_overrun_behavior = 3
+
+[node name="Add" type="Button" parent="NodePicker/Contents"]
+layout_mode = 2
+icon = ExtResource("4")
+text = "Add Node"

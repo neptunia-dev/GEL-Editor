@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://v4rfvvmiou7c"]
 
 [ext_resource type="Script" uid="uid://ctsdlaqak4501" path="res://workspace/editor_shell.gd" id="1_editor_shell"]
-[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_node_map.tscn" id="2_node_map_preview"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/node_map_workspace.tscn" id="2_node_map_workspace"]
 [ext_resource type="Script" path="res://workspace/explorer/explorer_tree.gd" id="3_explorer_tree"]
 [ext_resource type="Script" path="res://workspace/explorer/placeholder_explorer_panel.gd" id="4_placeholder_explorer_panel"]
 
@@ -656,7 +656,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PlaceholderNodeMap" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" instance=ExtResource("2_node_map_preview")]
+[node name="NodeMapWorkspace" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot" instance=ExtResource("2_node_map_workspace")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

@@ -2,7 +2,7 @@ extends SceneTree
 
 const SHELL := preload("res://workspace/editor_shell.tscn")
 const WORKSPACE_PATH := "EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace"
-const PREVIEW_PATH := WORKSPACE_PATH + "/WorkspaceCanvas/CanvasRoot/PlaceholderNodeMap"
+const PREVIEW_PATH := WORKSPACE_PATH + "/WorkspaceCanvas/CanvasRoot/NodeMapWorkspace/PlaceholderNodeMap"
 
 var _checks := 0
 var _failures := 0
@@ -22,6 +22,8 @@ func _run() -> void:
 	root.add_child(_shell)
 	await _settle()
 	_preview = _shell.get_node(PREVIEW_PATH)
+	_preview.get_parent().current_tab = 1
+	await _settle()
 	_check(_preview.active_graph_key == "root", "root graph is initially visible")
 	_check(_preview.get_node("Toolbar/Row/Back").disabled, "back is disabled at root")
 	await _test_graphs()

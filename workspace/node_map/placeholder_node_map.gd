@@ -19,6 +19,7 @@ func _ready() -> void:
 	_back.pressed.connect(show_graph.bind("root"))
 	$Toolbar/Row/FrameAll.pressed.connect(_frame_active)
 	$Toolbar/Row/Reset.pressed.connect(_reset_active)
+	visibility_changed.connect(_on_visibility_changed)
 	for key in GRAPH_NAMES:
 		var graph = $GraphStack.get_node(GRAPH_NAMES[key])
 		graph.scene_requested.connect(show_graph)
@@ -48,9 +49,13 @@ func show_graph(scene_key: String) -> void:
 func _frame_after_layout(scene_key: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
-	if active_graph_key == scene_key:
+	if active_graph_key == scene_key and is_visible_in_tree():
 		_visited[scene_key] = true
 		_frame_active()
+
+func _on_visibility_changed() -> void:
+	if is_visible_in_tree() and not _visited.has(active_graph_key):
+		_frame_after_layout(active_graph_key)
 
 func _frame_active() -> void:
 	get_active_graph().frame_all()

@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[node name="Row" type="HBoxContainer"]
+custom_minimum_size = Vector2(0, 28)
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="."]
+custom_minimum_size = Vector2(66, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+mouse_filter = 2
+
+[node name="Content" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+mouse_filter = 2

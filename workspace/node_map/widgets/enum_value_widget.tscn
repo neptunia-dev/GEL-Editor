@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://workspace/node_map/widgets/value_widget.tscn" id="1"]
+[ext_resource type="Script" path="res://workspace/node_map/widgets/enum_value_widget.gd" id="2"]
+
+[node name="EnumValueWidget" instance=ExtResource("1")]
+script = ExtResource("2")
+
+[node name="Editor" type="OptionButton" parent="." index="1"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+clip_text = true
+text_overrun_behavior = 3
+fit_to_longest_item = false

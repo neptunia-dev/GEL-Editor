@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://workspace/node_map/widgets/value_widget.tscn" id="1"]
+[ext_resource type="Script" path="res://workspace/node_map/widgets/number_value_widget.gd" id="2"]
+
+[node name="NumberValueWidget" instance=ExtResource("1")]
+script = ExtResource("2")
+
+[node name="Editor" type="SpinBox" parent="." index="1"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -1000000000000.0
+max_value = 1000000000000.0
+step = 0.01
+update_on_text_changed = false
+
+[node name="Input" type="LineEdit" parent="Editor" index="0"]
+layout_mode = 0
+size_flags_horizontal = 3
+expand_to_text_length = false
+placeholder_text = "Unset"
+
+[node name="CommitTimer" type="Timer" parent="." index="2"]
+wait_time = 0.3
+one_shot = true
