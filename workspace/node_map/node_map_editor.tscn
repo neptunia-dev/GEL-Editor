@@ -3,13 +3,6 @@
 [ext_resource type="Script" path="res://workspace/node_map/node_map_editor.gd" id="1"]
 [ext_resource type="Script" path="res://workspace/node_map/node_graph_view.gd" id="2"]
 [ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="3"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/plus.svg" id="4"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/arrow-left.svg" id="5"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/undo-2.svg" id="6"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/redo-2.svg" id="7"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/copy.svg" id="8"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/trash-2.svg" id="9"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/scan.svg" id="10"]
 
 [node name="NodeMapEditor" type="VBoxContainer"]
 anchors_preset = 15
@@ -29,7 +22,7 @@ theme_override_constants/separation = 4
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 tooltip_text = "Back to root graph"
-icon = ExtResource("5")
+text = "Back"
 
 [node name="Breadcrumb" type="Label" parent="Toolbar"]
 layout_mode = 2
@@ -41,21 +34,21 @@ text_overrun_behavior = 3
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 tooltip_text = "Add node"
-icon = ExtResource("4")
+text = "Add"
 
 [node name="Undo" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 disabled = true
 tooltip_text = "Undo"
-icon = ExtResource("6")
+text = "Undo"
 
 [node name="Redo" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 disabled = true
 tooltip_text = "Redo"
-icon = ExtResource("7")
+text = "Redo"
 
 [node name="Save" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(56, 30)
@@ -68,14 +61,14 @@ custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 disabled = true
 tooltip_text = "Duplicate selected nodes"
-icon = ExtResource("8")
+text = "Copy"
 
 [node name="Delete" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 disabled = true
 tooltip_text = "Delete selected nodes"
-icon = ExtResource("9")
+text = "Delete"
 
 [node name="Export" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(68, 30)
@@ -99,7 +92,7 @@ text = "Run"
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 tooltip_text = "Frame all nodes"
-icon = ExtResource("10")
+text = "Frame"
 
 [node name="Graph" type="GraphEdit" parent="."]
 custom_minimum_size = Vector2(280, 240)
@@ -155,5 +148,4 @@ text_overrun_behavior = 3
 
 [node name="Add" type="Button" parent="NodePicker/Contents"]
 layout_mode = 2
-icon = ExtResource("4")
 text = "Add Node"
