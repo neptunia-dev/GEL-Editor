@@ -10,14 +10,16 @@ func _restore_data(data: Dictionary) -> bool:
 	if not Values.has_keys(data, ["choices"]) or not data.choices is Array:
 		return false
 	var seen: Dictionary = {}
+	var restored: Array = []
 	for index in data.choices.size():
 		var item: Variant = data.choices[index]
 		if not item is Dictionary or not Values.has_keys(item, ["choice_id", "label", "order"]):
 			return false
-		if not Values.valid_id(item.choice_id) or not item.label is String or not Values.is_integer(item.order) or item.order != index or seen.has(item.choice_id):
+		if not Values.valid_id(item.choice_id) or not item.label is String or not Values.is_integer(item.order) or int(item.order) != index or seen.has(item.choice_id):
 			return false
 		seen[item.choice_id] = true
-	_choices = data.choices.duplicate(true)
+		restored.append({"choice_id": item.choice_id, "label": item.label, "order": index})
+	_choices = restored
 	return true
 
 func get_local_port_specs() -> Array:

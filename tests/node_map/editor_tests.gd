@@ -58,11 +58,13 @@ func _run() -> void:
 	_check(not _child_id.is_empty(), "sample prologue exists")
 	await _capture("root-1440")
 	await _test_navigation()
+	await _test_export()
 	await _test_extension()
 	await _test_inputs()
 	await _test_choices()
 	await _test_history()
 	await _test_layouts()
+	await _test_project_persistence()
 	_shell.queue_free()
 	await process_frame
 	if _failures == 0:
@@ -289,6 +291,23 @@ func _test_choices() -> void:
 	_check(view.output_port_ids == [second, first], "undo restores dynamic port ID and order")
 	_check(_document.get_links(_child_id).any(func(link): return link.link_id == link_id), "undo restores original link ID")
 
+func _test_export() -> void:
+	var destination := "user://node-map-editor-export-test"
+	var result: Dictionary = _editor.export_runtime_package(destination, {"package_id": "editor.test", "title": "Editor Test"})
+	_check(result.ok, "toolbar editor exports the current document: " + str(result.diagnostics))
+	if result.ok:
+		_check(FileAccess.file_exists(result.manifest_path), "editor export writes manifest")
+		_check(FileAccess.file_exists(result.directory.path_join("scenes/" + _document.get_node(_scene_id).scene_id + "/main.lua")), "editor export writes Scene Lua")
+		_check(_editor.get_node("Status/Diagnostic").text.begins_with("Exported Runtime Package"), "editor export reports output directory")
+	var validation: Dictionary = _editor.validate_runtime_package(destination, {"package_id": "editor.test", "title": "Editor Test"})
+	_check(validation.ok and _editor.get_node("Status/Diagnostic").text.begins_with("Runtime Package validated by Node engine"), "editor Validate calls the real Node PackageLoader")
+	if validation.ok:
+		_check(validation.engine.valid and validation.engine.packageId == "editor.test", "Node validation returns package metadata to the editor")
+	var run: Dictionary = _editor.run_runtime_package_auto(destination, {"package_id": "editor.test", "title": "Editor Test"})
+	_check(run.ok and _editor.get_node("Status/Diagnostic").text.begins_with("Runtime Package ran in Node engine"), "editor Run calls the real Node StoryRunner")
+	if run.ok:
+		_check(run.engine.completed and run.engine.scenes.size() >= 1, "Node StoryRunner returns a completed smoke-run result")
+
 func _test_history() -> void:
 	_editor.graph.finish_edits()
 	var initial: Dictionary = _document.get_snapshot()
@@ -319,6 +338,147 @@ func _test_history() -> void:
 	await _settle()
 	_check(scene_before == _document.get_snapshot(), "scene undo restores all nodes ports and links")
 	_check(_graph.graph_id == _document.root_graph_id, "history does not overwrite navigation")
+
+func _test_project_persistence() -> void:
+	var path := "user://node-map-editor-project-tests/editor" + ".gelproj"
+	var absolute := ProjectSettings.globalize_path(path)
+	DirAccess.remove_absolute(absolute)
+	_editor.show_graph(_document.root_graph_id)
+	await _settle()
+	var original_snapshot: Dictionary = _document.get_snapshot()
+	var document_identity = _document
+	_editor.show_graph(_child_id)
+	await _settle()
+	_graph.zoom = 1.15
+	_graph.scroll_offset = Vector2(38, -12)
+	var saved_graph_id: String = _graph.graph_id
+	var saved_zoom: float = _graph.zoom
+	var saved_scroll: Vector2 = _graph.scroll_offset
+	var saved: Dictionary = _editor.save_project(path)
+	_check(saved.ok and _editor.get_project_path() == saved.path and not _editor.is_project_dirty(), "editor saves a project and records its path")
+	_check(FileAccess.file_exists(saved.path), "editor project file exists after save")
+	_editor.show_graph(_document.root_graph_id)
+	await _settle()
+	_check(_editor.is_project_dirty(), "changing the active graph marks editor state dirty")
+	var restored_active_graph: Dictionary = _editor.open_project(path)
+	await _settle()
+	_check(restored_active_graph.ok and not _editor.is_project_dirty() and _graph.graph_id == saved_graph_id, "opening restores the saved active graph as a clean editor state")
+	_graph.scroll_offset = saved_scroll + Vector2(18, 9)
+	await _settle()
+	_check(_editor.is_project_dirty(), "panning the canvas marks persisted editor state dirty")
+	var restored_viewport: Dictionary = _editor.open_project(path)
+	await _settle()
+	_check(restored_viewport.ok and not _editor.is_project_dirty() and _graph.scroll_offset.is_equal_approx(saved_scroll), "opening restores the saved viewport as a clean editor state")
+	_graph.zoom = saved_zoom + 0.1
+	_graph.gui_input.emit(InputEventMouseButton.new())
+	await _settle()
+	_check(_editor.is_project_dirty(), "zooming the canvas marks persisted editor state dirty")
+	var restored_zoom: Dictionary = _editor.open_project(path)
+	await _settle()
+	_check(restored_zoom.ok and not _editor.is_project_dirty() and is_equal_approx(_graph.zoom, saved_zoom), "opening restores the saved zoom as a clean editor state")
+	var node_id: String = _document.get_nodes(_document.root_graph_id)[0].node_id
+	var moved: Dictionary = _editor.controller.execute({"op": "move_nodes", "positions": {node_id: Vector2(77, 88)}})
+	_check(moved.ok and _editor.is_project_dirty(), "editing after save marks the project dirty")
+	var opened: Dictionary = _editor.open_project(path)
+	await _settle()
+	_check(opened.ok and _editor.document == document_identity, "opening restores into the existing document instance")
+	_check(_document.get_snapshot() == original_snapshot and not _editor.is_project_dirty(), "opening restores the saved snapshot and clean state")
+	_check(_graph.graph_id == saved_graph_id and is_equal_approx(_graph.zoom, saved_zoom) and _graph.scroll_offset.is_equal_approx(saved_scroll), "opening restores the active graph and saved viewport state")
+	_check(not _editor.controller.can_undo(), "opening a project clears history across the project boundary")
+	var project_popup: PopupMenu = _shell.get_node("EditorRoot/EditorTitleBar/TitleBarRow/ProjectMenu").get_popup()
+	project_popup.id_pressed.emit(104)
+	await _settle()
+	var settings_dialog: ConfirmationDialog = _shell.get_node("ProjectSettingsDialog")
+	var settings_fields: Dictionary = _shell._project_settings_fields
+	_check(settings_dialog.visible, "Project Settings opens an editable project configuration form")
+	for field_key in settings_fields:
+		var field: Control = settings_fields[field_key]
+		_check(field.is_visible_in_tree() and field.size.x > 0 and field.size.y > 0, "Project Settings field has a usable layout: " + str(field_key))
+	(settings_fields["title"] as LineEdit).text = "Persisted Editor Story"
+	(settings_fields["package_id"] as LineEdit).text = "persisted.editor.story"
+	settings_dialog.confirmed.emit()
+	settings_dialog.hide()
+	await _settle()
+	var metadata: Dictionary = _editor.get_project_metadata()
+	_check(metadata.metadata.title == "Persisted Editor Story" and metadata.package.package_id == "persisted.editor.story" and _editor.is_project_dirty(), "Project Settings updates persisted package metadata and dirty state")
+	var saved_again: Dictionary = _editor.save_project()
+	_check(saved_again.ok and not _editor.is_project_dirty(), "save without a path uses the current project path")
+	var compile_options: Dictionary = _editor._project_compile_options()
+	_check(compile_options.package_id == "persisted.editor.story" and compile_options.title == "Persisted Editor Story", "persisted package configuration maps to compiler options")
+	var failed_file := "user://node-map-editor-project-tests/broken.gelproj"
+	var failed_handle := FileAccess.open(ProjectSettings.globalize_path(failed_file), FileAccess.WRITE)
+	failed_handle.store_string("not json")
+	failed_handle.close()
+	var before_failed_open: Dictionary = _document.get_snapshot()
+	var failed_open: Dictionary = _editor.open_project(failed_file)
+	_check(not failed_open.ok and _document.get_snapshot() == before_failed_open and _editor.get_project_path() == saved_again.path, "failed project open leaves the current project untouched")
+	var dirty_node: String = _document.get_nodes(_document.root_graph_id)[0].node_id
+	var marked_dirty: Dictionary = _editor.controller.execute({"op": "move_nodes", "positions": {dirty_node: Vector2(123, 234)}})
+	_check(marked_dirty.ok and _editor.is_project_dirty(), "a saved project becomes dirty before destructive menu actions")
+	project_popup.id_pressed.emit(100)
+	await _settle()
+	var unsaved_dialog: ConfirmationDialog = _shell.get_node("UnsavedChangesDialog")
+	_check(unsaved_dialog.visible and unsaved_dialog.get_ok_button().text == "Save" and _shell._discard_changes_button != null and _document.get_nodes(_document.root_graph_id).size() > 1, "dirty Project menu actions offer Save, Discard, and Cancel")
+	unsaved_dialog.confirmed.emit()
+	unsaved_dialog.hide()
+	await _settle()
+	_check(_document.get_nodes(_document.root_graph_id).size() == 1 and _editor.get_project_path().is_empty() and not _editor.is_project_dirty(), "saving before Project menu New creates a clean document with only Project Start")
+	var reopened_after_save: Dictionary = _editor.open_project(path)
+	await _settle()
+	_check(reopened_after_save.ok and _document.get_node(dirty_node).position == Vector2(123, 234), "Save before New publishes the dirty document before replacement")
+	var discarded_dirty: Dictionary = _editor.controller.execute({"op": "move_nodes", "positions": {dirty_node: Vector2(321, 432)}})
+	_check(discarded_dirty.ok and _editor.is_project_dirty(), "second destructive-action fixture is dirty")
+	project_popup.id_pressed.emit(101)
+	await _settle()
+	_check(unsaved_dialog.visible, "Open Project also requests a dirty-document decision")
+	unsaved_dialog.canceled.emit()
+	unsaved_dialog.hide()
+	await _settle()
+	_check(_editor.is_project_dirty() and _editor.get_project_path() == saved_again.path and _shell._pending_destructive_action.is_empty() and _shell._save_then_destructive_action.is_empty(), "Cancel preserves the document and clears the pending destructive action")
+	_shell._request_destructive_project_action("quit")
+	await _settle()
+	_check(unsaved_dialog.visible, "Quit requests the same dirty-document decision")
+	unsaved_dialog.canceled.emit()
+	unsaved_dialog.hide()
+	await _settle()
+	_check(_editor.is_project_dirty(), "Canceling Quit preserves unsaved work")
+	project_popup.id_pressed.emit(100)
+	await _settle()
+	unsaved_dialog.custom_action.emit(StringName("discard_changes"))
+	await _settle()
+	_check(_document.get_nodes(_document.root_graph_id).size() == 1 and _editor.get_project_path().is_empty() and not _editor.is_project_dirty(), "Discard continues Project menu New without saving")
+	var unsaved_start: String = _document.get_nodes(_document.root_graph_id)[0].node_id
+	var unsaved_edit: Dictionary = _editor.controller.execute({"op": "move_nodes", "positions": {unsaved_start: Vector2(55, 66)}})
+	_check(unsaved_edit.ok and _editor.is_project_dirty(), "untitled project becomes dirty before Save As continuation")
+	project_popup.id_pressed.emit(100)
+	await _settle()
+	unsaved_dialog.confirmed.emit()
+	unsaved_dialog.hide()
+	await _settle()
+	var save_as_dialog: FileDialog = _shell.get_node("ProjectFileDialog")
+	_check(save_as_dialog.visible and save_as_dialog.file_mode == FileDialog.FILE_MODE_SAVE_FILE and _shell._save_then_destructive_action == "new_project", "Save routes an untitled project through Save As before continuing")
+	var save_as_path := "user://node-map-editor-project-tests/save-as-before-new.gelproj"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(save_as_path))
+	save_as_dialog.file_selected.emit(save_as_path)
+	await _settle()
+	_check(FileAccess.file_exists(ProjectSettings.globalize_path(save_as_path)) and _document.get_nodes(_document.root_graph_id).size() == 1 and _editor.get_project_path().is_empty(), "successful Save As resumes the deferred Project menu New action")
+	var reopened_after_save_as: Dictionary = _editor.open_project(save_as_path)
+	await _settle()
+	_check(reopened_after_save_as.ok and _document.get_node(unsaved_start).position == Vector2(55, 66), "Save As continuation writes the untitled document before replacement")
+	_editor.new_project()
+	var open_after_save_start: String = _document.get_nodes(_document.root_graph_id)[0].node_id
+	var open_after_save_edit: Dictionary = _editor.controller.execute({"op": "move_nodes", "positions": {open_after_save_start: Vector2(77, 88)}})
+	_check(open_after_save_edit.ok and _editor.is_project_dirty(), "untitled Open fixture has changes to save")
+	project_popup.id_pressed.emit(101)
+	await _settle()
+	unsaved_dialog.confirmed.emit()
+	await _settle()
+	var save_before_open_path := "user://node-map-editor-project-tests/save-before-open.gelproj"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(save_before_open_path))
+	save_as_dialog.file_selected.emit(save_before_open_path)
+	await _settle()
+	_check(_editor.get_project_path() == ProjectSettings.globalize_path(save_before_open_path) and not _editor.is_project_dirty() and _shell._project_dialog_mode == FileDialog.FILE_MODE_OPEN_FILE and save_as_dialog.file_mode == FileDialog.FILE_MODE_OPEN_FILE, "Save As before Open persists first and then opens a fresh project chooser")
+	save_as_dialog.hide()
 
 func _test_layouts() -> void:
 	for window_size in [Vector2i(1024, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]:

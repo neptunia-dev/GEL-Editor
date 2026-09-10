@@ -9,6 +9,7 @@
 - [编辑器模块框架](editor-module-framework-design.md)：轻量模块注册、槽位接入和未来工作区模块的扩展方式。
 - [Explorer 显示框架](editor-explorer-display-framework-design.md)：可替换数据源的树形显示、筛选、选择和激活框架。
 - [Node Map 重设计与文件架构](node-map-file-architecture.md)：公共节点父类、层级 Graph、端口、连接、复合 Scene、序列化和编译边界。
+- [Node Map 工程文件](node-map-project-file.md)：已实现的 `.gelproj` v1 容器、保存/加载、项目配置与 Runtime Package 的边界。
 - [SceneNode 设计](scene-node-design.md)：作为复合节点的 SceneNode 字段、子图接口、复制、删除和校验契约。
 - [Node Map 显示占位](node-map-preview.md)：当前 GraphEdit 演示场景、预览交互、运行方式与限制。
 
@@ -29,7 +30,8 @@
 EditorShell 占位场景已经将布局状态映射到 `SplitContainer`、`TabContainer` 和占位面板；
 具体业务模块和 LayoutRenderer 仍待后续实现。
 
-旧版 Node Map 领域代码、条件树、专用路由对象及其旧测试已经删除。新的 Node Map
-领域模型目前只完成架构设计，尚未开始实现；实现规范见 [Node Map 重设计与文件架构](node-map-file-architecture.md)。
-中央 Workspace 已接入独立的静态显示占位，可以查看根图、三个 Scene 子图及临时连线效果，
-但没有工程文件读写、编译或真实业务数据源。
+Node Map 领域模型、编辑器画布、JSON 工程文件、Runtime Package 编译/导出及 Node CLI
+校验/自动运行已实现并有 headless 回归覆盖。`.gelproj` 保存编辑器工程，Runtime Package
+目录由编译器单独生成，二者不能互换；具体工程文件契约见 [Node Map 工程文件](node-map-project-file.md)。
+
+无工程启动时仍显示示例文档。角色、资源、变量和 Godot 内交互式预览仍待后续工作。

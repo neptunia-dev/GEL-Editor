@@ -57,6 +57,12 @@ disabled = true
 tooltip_text = "Redo"
 icon = ExtResource("7")
 
+[node name="Save" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(56, 30)
+layout_mode = 2
+tooltip_text = "Save the current GEL editor project"
+text = "Save"
+
 [node name="Duplicate" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
@@ -70,6 +76,24 @@ layout_mode = 2
 disabled = true
 tooltip_text = "Delete selected nodes"
 icon = ExtResource("9")
+
+[node name="Export" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(68, 30)
+layout_mode = 2
+tooltip_text = "Export Runtime Package to user://runtime-package"
+text = "Export"
+
+[node name="Validate" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(72, 30)
+layout_mode = 2
+tooltip_text = "Validate the exported Runtime Package with Node PackageLoader"
+text = "Validate"
+
+[node name="Run" type="Button" parent="Toolbar"]
+custom_minimum_size = Vector2(52, 30)
+layout_mode = 2
+tooltip_text = "Smoke-run the package through Node StoryRunner (automatic input)"
+text = "Run"
 
 [node name="Frame" type="Button" parent="Toolbar"]
 custom_minimum_size = Vector2(30, 30)
