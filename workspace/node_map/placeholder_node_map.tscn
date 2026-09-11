@@ -6,9 +6,6 @@
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_prologue_graph.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_chapter_graph.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_ending_graph.tscn" id="6"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/arrow-left.svg" id="7"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/scan.svg" id="8"]
-[ext_resource type="Texture2D" path="res://workspace/node_map/icons/rotate-ccw.svg" id="9"]
 
 [node name="PlaceholderNodeMap" type="VBoxContainer"]
 anchors_preset = 15
@@ -36,7 +33,7 @@ custom_minimum_size = Vector2(32, 28)
 layout_mode = 2
 disabled = true
 tooltip_text = "Back to root graph"
-icon = ExtResource("7")
+text = "Back"
 
 [node name="Breadcrumb" type="Label" parent="Toolbar/Row"]
 layout_mode = 2
@@ -48,13 +45,13 @@ text_overrun_behavior = 3
 custom_minimum_size = Vector2(32, 28)
 layout_mode = 2
 tooltip_text = "Frame all nodes"
-icon = ExtResource("8")
+text = "Frame"
 
 [node name="Reset" type="Button" parent="Toolbar/Row"]
 custom_minimum_size = Vector2(32, 28)
 layout_mode = 2
 tooltip_text = "Reset current preview"
-icon = ExtResource("9")
+text = "Reset"
 
 [node name="GraphStack" type="MarginContainer" parent="."]
 custom_minimum_size = Vector2(0, 240)

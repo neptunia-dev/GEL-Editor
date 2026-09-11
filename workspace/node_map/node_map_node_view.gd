@@ -5,8 +5,6 @@ signal command_requested(command: Dictionary)
 signal scene_requested(graph_id: String)
 
 const ROW := preload("res://workspace/node_map/node_row.tscn")
-const RESET := preload("res://workspace/node_map/icons/rotate-ccw.svg")
-const FOLD := preload("res://workspace/node_map/icons/chevron-up.svg")
 var node_id := ""
 var input_port_ids: Array = []
 var output_port_ids: Array = []
@@ -25,7 +23,7 @@ var _pending_navigation := false
 
 func _ready() -> void:
 	_fold_button = Button.new()
-	_fold_button.icon = FOLD
+	_fold_button.text = "^"
 	_fold_button.custom_minimum_size = Vector2(24, 24)
 	_fold_button.tooltip_text = "Collapse node"
 	get_titlebar_hbox().add_child(_fold_button)
@@ -204,7 +202,6 @@ func _build_extra(extra: Dictionary) -> void:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 28)
 		button.text = extra.label
-		button.icon = load("res://workspace/node_map/icons/%s.svg" % extra.get("icon_key", "arrow-left"))
 		button.set_meta("descriptor", extra)
 		button.pressed.connect(func(): _run_action(button.get_meta("descriptor")))
 		add_child(button)
@@ -226,11 +223,21 @@ func _refresh_actions(container: HBoxContainer, actions: Array) -> void:
 
 func _icon_button(icon_key: String, tooltip: String) -> Button:
 	var button := Button.new()
-	button.icon = load("res://workspace/node_map/icons/%s.svg" % icon_key)
+	button.text = _button_text(icon_key)
 	button.tooltip_text = tooltip
 	button.custom_minimum_size = Vector2(24, 24)
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return button
+
+func _button_text(icon_key: String) -> String:
+	match icon_key:
+		"rotate-ccw": return "Reset"
+		"trash-2": return "X"
+		"copy": return "Copy"
+		"plus": return "+"
+		"arrow-left": return "Back"
+		"chevron-up": return "^"
+	return icon_key
 
 func _run_action(descriptor: Dictionary) -> void:
 	finish_edits()
