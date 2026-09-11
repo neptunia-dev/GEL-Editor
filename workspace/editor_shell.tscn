@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://ctsdlaqak4501" path="res://workspace/editor_shell.gd" id="1_editor_shell"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/node_map_workspace.tscn" id="2_node_map_workspace"]
 [ext_resource type="Script" path="res://workspace/explorer/explorer_tree.gd" id="3_explorer_tree"]
-[ext_resource type="Script" path="res://workspace/explorer/placeholder_explorer_panel.gd" id="4_placeholder_explorer_panel"]
+[ext_resource type="Script" path="res://workspace/explorer/node_map_explorer_panel.gd" id="4_node_map_explorer_panel"]
+[ext_resource type="Script" path="res://workspace/inspector/editor_inspector.gd" id="5_editor_inspector"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bar"]
 content_margin_left = 6.0
@@ -489,7 +490,7 @@ tabs_rearrange_group = 1
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 5
-script = ExtResource("4_placeholder_explorer_panel")
+script = ExtResource("4_node_map_explorer_panel")
 metadata/_tab_index = 0
 
 [node name="ExplorerToolbar" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer"]
@@ -758,6 +759,7 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 metadata/_tab_index = 0
+script = ExtResource("5_editor_inspector")
 
 [node name="InspectorContent" type="VBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector" unique_id=801200243]
 layout_mode = 2
@@ -851,10 +853,11 @@ text = "History"
 [node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=1034383091]
 layout_mode = 2
 
-[node name="Status" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=568608967]
+[node name="Status" type="ItemList" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=568608967]
 layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-text = "No recent edits"
 
 [node name="HistoryFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=1827998680]
 layout_mode = 2
