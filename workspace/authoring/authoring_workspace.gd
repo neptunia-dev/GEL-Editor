@@ -39,6 +39,7 @@ const STEP_DIRS: PackedStringArray = ["", "scenes", "scripts", "review", "ir"]
 @onready var _prompt_row: HBoxContainer = $Content/PromptRow
 @onready var _prompt: LineEdit = $Content/PromptRow/Prompt
 @onready var _stage_button: Button = $Content/ActionBar/ActionRow/StageButton
+@onready var _continue_button: Button = $Content/ActionBar/ActionRow/Continue
 @onready var _dir_dialog: FileDialog = $DirectoryDialog
 @onready var _add_dialog: FileDialog = $AddFileDialog
 @onready var _confirm_delete: ConfirmationDialog = $ConfirmDelete
@@ -53,6 +54,7 @@ func _ready() -> void:
 	_add_dialog.files_selected.connect(_add_files)
 	_confirm_delete.confirmed.connect(_confirm_delete_current)
 	_stage_button.pressed.connect(_on_stage_action)
+	_continue_button.pressed.connect(_skip_review)
 	$Content/PromptRow/Regen.pressed.connect(regenerate_current)
 	for i in 5:
 		var step_button: Button = $Content/StepBar/StepRow.get_child(i)
@@ -202,7 +204,7 @@ func _on_poll() -> void:
 				_chain.remove_at(0)
 				_start_stage(next)
 				return
-			_set_status("Review scripts/*.md, then run Review.", "success")
+			_set_status("Review is optional. Continue skips it.", "success")
 		elif stage == "review":
 			_set_status("Review finished. Generate IR when ready.", "success")
 		elif stage == "ir":
@@ -384,8 +386,8 @@ func _refresh_preview(relative: String) -> void:
 	if relative.is_empty() or not _busy:
 		return
 	var text := load_relative(relative)
-	if _editor.text != text:
-		var follow := _editor_at_bottom()
+	if _editor.text != text or current_file != relative:
+		var follow := current_file != relative or _editor_at_bottom()
 		var saved := _editor.scroll_vertical
 		_editor.text = text
 		current_file = relative
@@ -568,9 +570,23 @@ func _refresh_action_bar() -> void:
 	_stage_button.text = STEP_ACTIONS[_current_step]
 	_stage_button.disabled = _busy or (_current_step == 4 and not FileAccess.file_exists(directory.path_join("ir").path_join("story.json")))
 	_prompt_row.visible = (_current_step == 2)
+	_continue_button.visible = (_current_step == 3)
+	_continue_button.disabled = _busy
 	$Content/Body/Split/FilesPane/FileHeader/Add.disabled = directory.is_empty()
 	$Content/Body/Split/FilesPane/FileHeader/Delete.disabled = current_file.is_empty()
 	$Content/Body/Split/FilesPane/FileHeader/Save.disabled = current_file.is_empty()
+
+func _skip_review() -> void:
+	if _busy or directory.is_empty() or _current_step != 3:
+		return
+	_step_states[3] = "done"
+	_current_step = 4
+	if _step_states[4] == "pending":
+		_step_states[4] = "current"
+	refresh_files()
+	_refresh_step_bar()
+	_refresh_action_bar()
+	_set_status("Skipped review. Generate IR when ready.", "info")
 
 func _on_stage_action() -> void:
 	if _current_step >= 4:

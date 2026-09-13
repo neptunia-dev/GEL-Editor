@@ -271,6 +271,14 @@ custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "▶ Generate Scenes"
 
+
+[node name="Continue" type="Button" parent="Content/ActionBar/ActionRow"]
+visible = false
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+tooltip_text = "Skip review and go to IR"
+text = "Continue"
+
 [node name="DirectoryDialog" type="FileDialog" parent="."]
 title = "Open Authoring Directory"
 ok_button_text = "Select"
