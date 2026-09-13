@@ -204,25 +204,25 @@ text = "Files"
 vertical_alignment = 1
 
 [node name="Add" type="Button" parent="Content/Body/Split/FilesPane/FileHeader"]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(26, 24)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
 tooltip_text = "Add files from outside into this step's folder"
-text = "Add…"
+text = "+ Add"
 
 [node name="Delete" type="Button" parent="Content/Body/Split/FilesPane/FileHeader"]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(26, 24)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
 tooltip_text = "Delete the selected file"
-text = "Delete"
+text = "✕"
 
 [node name="Save" type="Button" parent="Content/Body/Split/FilesPane/FileHeader"]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(26, 24)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
 tooltip_text = "Save the open file"
-text = "Save"
+text = "💾"
 
 [node name="Files" type="ItemList" parent="Content/Body/Split/FilesPane"]
 layout_mode = 2
