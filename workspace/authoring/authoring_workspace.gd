@@ -385,15 +385,30 @@ func _refresh_preview(relative: String) -> void:
 		return
 	var text := load_relative(relative)
 	if _editor.text != text:
+		var follow := _editor_at_bottom()
+		var saved := _editor.scroll_vertical
 		_editor.text = text
 		current_file = relative
 		_dirty = false
+		if follow:
+			var last := maxi(_editor.get_line_count() - 1, 0)
+			_editor.set_caret_line(last)
+			_editor.set_caret_column(_editor.get_line(last).length())
+			_editor.scroll_vertical = _editor.get_line_count()
+		else:
+			_editor.scroll_vertical = saved
 	var keep := current_file
 	refresh_files()
 	for index in _files.item_count:
 		if _files.get_item_text(index) == keep:
 			_files.select(index)
 			break
+
+func _editor_at_bottom() -> bool:
+	var bar := _editor.get_v_scroll_bar()
+	if bar == null or bar.max_value <= bar.page:
+		return true
+	return bar.value >= bar.max_value - bar.page - 4.0
 
 func _consume_ir_stream() -> void:
 	if _stream_applier == null:
