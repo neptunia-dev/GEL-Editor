@@ -40,6 +40,11 @@ text = "Save"
 layout_mode = 2
 text = "Validate"
 
+[node name="Scenes" type="Button" parent="Main/Toolbar"]
+layout_mode = 2
+tooltip_text = "Generate scene markdown from outline. Review the files before generating scripts."
+text = "Scenes"
+
 [node name="Editor" type="TextEdit" parent="Main"]
 layout_mode = 2
 size_flags_vertical = 3

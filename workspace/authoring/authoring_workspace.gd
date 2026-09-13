@@ -8,6 +8,9 @@ var directory := ""
 var current_file := ""
 var _dirty := false
 var _bridge = BRIDGE.new()
+var _poll: Timer
+var _busy := false
+var _pending_stage := ""
 
 @onready var _files: ItemList = $Files
 @onready var _editor: TextEdit = $Main/Editor
@@ -19,9 +22,14 @@ func _ready() -> void:
 	$Main/Toolbar/Init.pressed.connect(_init_directory)
 	$Main/Toolbar/Save.pressed.connect(save_current)
 	$Main/Toolbar/Validate.pressed.connect(_validate_directory)
+	$Main/Toolbar/Scenes.pressed.connect(func(): _start_stage("scenes"))
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
+	_poll = Timer.new()
+	_poll.wait_time = 0.5
+	_poll.timeout.connect(_on_poll)
+	add_child(_poll)
 	_set_status("Open or init an authoring directory.")
 
 func authoring_dir_for_project(project_path: String) -> String:
@@ -94,6 +102,39 @@ func _validate_directory() -> void:
 		return
 	save_current()
 	_show_bridge(_bridge.validate_directory(directory), "Authoring files are valid.")
+
+func _start_stage(stage: String, extra: Array = []) -> void:
+	if directory.is_empty() or _busy:
+		_set_status("Open an authoring directory first." if directory.is_empty() else "Authoring command already running.")
+		return
+	save_current()
+	var started: Dictionary = _bridge.start_author(stage, directory, extra)
+	if not started.ok:
+		_show_bridge(started, "")
+		return
+	_busy = true
+	_pending_stage = stage
+	_set_status("Running " + stage + "...")
+	_poll.start()
+
+func _on_poll() -> void:
+	var status: Dictionary = _bridge.read_status(directory)
+	if str(status.get("stage", "")) != _pending_stage or str(status.get("state", "")) != "done":
+		var message := str(status.get("message", ""))
+		_set_status(message if not message.is_empty() else "Running " + _pending_stage + "...")
+		return
+	_poll.stop()
+	_busy = false
+	refresh_files()
+	if bool(status.get("ok", false)):
+		var stage := str(status.get("stage", ""))
+		if stage == "scenes":
+			_set_status("Review scenes/*.md, then generate scripts.")
+		else:
+			_set_status("Finished " + stage + ".")
+	else:
+		var diagnostics: Array = status.get("diagnostics", [])
+		_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else str(status.get("message", "Authoring command failed")))
 
 func _on_file_selected(index: int) -> void:
 	if _dirty and not current_file.is_empty():
