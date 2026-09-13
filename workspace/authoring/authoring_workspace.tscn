@@ -65,6 +65,15 @@ layout_mode = 2
 tooltip_text = "Apply IR to the Node Map and export a Runtime Package."
 text = "Apply"
 
+[node name="Regen" type="Button" parent="Main/Toolbar"]
+layout_mode = 2
+tooltip_text = "Regenerate the current scene from the prompt, selection, or edited script."
+text = "Regen"
+
+[node name="Prompt" type="LineEdit" parent="Main"]
+layout_mode = 2
+placeholder_text = "Regen prompt (optional). Box-select nodes on the Node Map to focus."
+
 [node name="Editor" type="TextEdit" parent="Main"]
 layout_mode = 2
 size_flags_vertical = 3

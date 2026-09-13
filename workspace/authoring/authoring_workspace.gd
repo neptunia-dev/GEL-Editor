@@ -11,10 +11,12 @@ var _bridge = BRIDGE.new()
 var _poll: Timer
 var _busy := false
 var _pending_stage := ""
+var _chain: PackedStringArray = PackedStringArray()
 
 @onready var _files: ItemList = $Files
 @onready var _editor: TextEdit = $Main/Editor
 @onready var _status: Label = $Main/Status
+@onready var _prompt: LineEdit = $Main/Prompt
 @onready var _dir_dialog: FileDialog = $DirectoryDialog
 
 func _ready() -> void:
@@ -27,6 +29,7 @@ func _ready() -> void:
 	$Main/Toolbar/Review.pressed.connect(func(): _start_stage("review"))
 	$Main/Toolbar/IR.pressed.connect(func(): _start_stage("ir"))
 	$Main/Toolbar/Apply.pressed.connect(apply_current_ir)
+	$Main/Toolbar/Regen.pressed.connect(regenerate_current)
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
@@ -135,6 +138,11 @@ func _on_poll() -> void:
 		if stage == "scenes":
 			_set_status("Review scenes/*.md, then generate scripts.")
 		elif stage == "scripts":
+			if _chain.size() > 0:
+				var next := _chain[0]
+				_chain.remove_at(0)
+				_start_stage(next)
+				return
 			_set_status("Review scripts/*.md, then run Review.")
 		elif stage == "review":
 			_set_status("Review finished. Generate IR when ready.")
@@ -144,6 +152,7 @@ func _on_poll() -> void:
 		else:
 			_set_status("Finished " + stage + ".")
 	else:
+		_chain.clear()
 		var diagnostics: Array = status.get("diagnostics", [])
 		_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else str(status.get("message", "Authoring command failed")))
 
@@ -180,6 +189,52 @@ func _show_bridge(result: Dictionary, success: String) -> void:
 	var diagnostics: Array = result.get("diagnostics", [])
 	_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else "Authoring command failed")
 
+
+func regenerate_current() -> void:
+	save_current()
+	var editor = get_parent().get_node_or_null("NodeMapEditor")
+	var scene_id := _target_scene_id(editor)
+	if scene_id.is_empty():
+		_set_status("Select a scene file or open a scene graph.")
+		return
+	var prompt := _prompt.text.strip_edges()
+	var focus := prompt
+	if editor != null:
+		var selected := _selection_focus(editor)
+		if not selected.is_empty():
+			focus = (focus + "\n" + selected).strip_edges()
+	save_relative("review/focus.txt", focus)
+	if not focus.is_empty() or current_file.begins_with("scenes/"):
+		_chain = PackedStringArray(["ir"])
+		_start_stage("scripts", ["--scene", scene_id])
+	else:
+		_chain.clear()
+		_start_stage("ir")
+
+func _target_scene_id(editor) -> String:
+	if current_file.begins_with("scenes/") or current_file.begins_with("scripts/") or current_file.begins_with("ir/"):
+		return current_file.get_file().get_basename()
+	if editor == null:
+		return ""
+	var graph = editor.document.get_graph(editor.graph.graph_id)
+	if graph != null and str(graph.kind) == "scene":
+		var owner_node = editor.document.get_node(graph.owner_node_id)
+		if owner_node != null:
+			return str(owner_node.get_parameter_values().get("scene_id", ""))
+	for node_id in editor.graph.get_selected_ids():
+		var node = editor.document.get_node(node_id)
+		if node != null and node.node_type == "gel.scene":
+			return str(node.get_parameter_values().get("scene_id", ""))
+	return ""
+
+func _selection_focus(editor) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	for node_id in editor.graph.get_selected_ids():
+		var node = editor.document.get_node(node_id)
+		if node == null:
+			continue
+		lines.append("%s %s" % [node.node_type, str(node.get_parameter_values())])
+	return "\n".join(lines)
 
 func apply_current_ir() -> Dictionary:
 	if directory.is_empty():
