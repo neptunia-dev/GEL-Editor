@@ -82,11 +82,29 @@ script = ExtResource("1")
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Heading" type="Label" parent="Content"]
+[node name="HeaderRow" type="HBoxContainer" parent="Content"]
 layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="Content/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_font_sizes/font_size = 12
 text = "Authoring"
+vertical_alignment = 1
+
+[node name="Open" type="Button" parent="Content/HeaderRow"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+tooltip_text = "Open an existing authoring directory"
+text = "Open…"
+
+[node name="Init" type="Button" parent="Content/HeaderRow"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+tooltip_text = "Create the authoring workspace next to the current project"
+text = "Init"
 
 [node name="HeadingRule" type="HSeparator" parent="Content"]
 layout_mode = 2
@@ -152,7 +170,7 @@ theme_override_styles/panel = SubResource("status_banner")
 [node name="StatusLabel" type="Label" parent="Content/StatusBanner"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
-text = "Open or init an authoring directory."
+text = "Init creates the workspace next to your project."
 text_overrun_behavior = 3
 vertical_alignment = 1
 
@@ -168,9 +186,47 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 split_offset = 200
 
-[node name="Files" type="ItemList" parent="Content/Body/Split"]
-custom_minimum_size = Vector2(160, 0)
+[node name="FilesPane" type="VBoxContainer" parent="Content/Body/Split"]
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="FileHeader" type="HBoxContainer" parent="Content/Body/Split/FilesPane"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="FilesLabel" type="Label" parent="Content/Body/Split/FilesPane/FileHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
+theme_override_font_sizes/font_size = 11
+text = "Files"
+vertical_alignment = 1
+
+[node name="Add" type="Button" parent="Content/Body/Split/FilesPane/FileHeader"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+tooltip_text = "Add files from outside into this step's folder"
+text = "Add…"
+
+[node name="Delete" type="Button" parent="Content/Body/Split/FilesPane/FileHeader"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+tooltip_text = "Delete the selected file"
+text = "Delete"
+
+[node name="Save" type="Button" parent="Content/Body/Split/FilesPane/FileHeader"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+tooltip_text = "Save the open file"
+text = "Save"
+
+[node name="Files" type="ItemList" parent="Content/Body/Split/FilesPane"]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="Editor" type="TextEdit" parent="Content/Body/Split"]
 layout_mode = 2
@@ -200,24 +256,10 @@ theme_override_styles/panel = SubResource("action_bar_bg")
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="Open" type="Button" parent="Content/ActionBar/ActionRow"]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "Open"
-
-[node name="Init" type="Button" parent="Content/ActionBar/ActionRow"]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "Init"
-
-[node name="Save" type="Button" parent="Content/ActionBar/ActionRow"]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "Save"
-
 [node name="Validate" type="Button" parent="Content/ActionBar/ActionRow"]
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
+tooltip_text = "Check authoring files for errors"
 text = "Validate"
 
 [node name="Spacer" type="Control" parent="Content/ActionBar/ActionRow"]
@@ -235,3 +277,14 @@ ok_button_text = "Select"
 file_mode = 2
 access = 2
 use_native_dialog = true
+
+[node name="AddFileDialog" type="FileDialog" parent="."]
+title = "Add Files to Authoring"
+ok_button_text = "Add"
+file_mode = 1
+access = 2
+use_native_dialog = true
+
+[node name="ConfirmDelete" type="ConfirmationDialog" parent="."]
+title = "Delete File"
+ok_button_text = "Delete"

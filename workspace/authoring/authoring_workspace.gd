@@ -30,7 +30,9 @@ var _current_step := 0
 var _step_states: PackedStringArray = PackedStringArray(["current", "pending", "pending", "pending", "pending"])
 var _status_style: StyleBoxFlat
 
-@onready var _files: ItemList = $Content/Body/Split/Files
+const STEP_DIRS: PackedStringArray = ["", "scenes", "scripts", "review", "ir"]
+
+@onready var _files: ItemList = $Content/Body/Split/FilesPane/Files
 @onready var _editor: TextEdit = $Content/Body/Split/Editor
 @onready var _status_banner: PanelContainer = $Content/StatusBanner
 @onready var _status_label: Label = $Content/StatusBanner/StatusLabel
@@ -38,12 +40,18 @@ var _status_style: StyleBoxFlat
 @onready var _prompt: LineEdit = $Content/PromptRow/Prompt
 @onready var _stage_button: Button = $Content/ActionBar/ActionRow/StageButton
 @onready var _dir_dialog: FileDialog = $DirectoryDialog
+@onready var _add_dialog: FileDialog = $AddFileDialog
+@onready var _confirm_delete: ConfirmationDialog = $ConfirmDelete
 
 func _ready() -> void:
-	$Content/ActionBar/ActionRow/Open.pressed.connect(_open_dialog)
-	$Content/ActionBar/ActionRow/Init.pressed.connect(_init_directory)
-	$Content/ActionBar/ActionRow/Save.pressed.connect(save_current)
+	$Content/HeaderRow/Open.pressed.connect(_open_dialog)
+	$Content/HeaderRow/Init.pressed.connect(_init_directory)
+	$Content/Body/Split/FilesPane/FileHeader/Add.pressed.connect(_add_file_dialog)
+	$Content/Body/Split/FilesPane/FileHeader/Delete.pressed.connect(_delete_current)
+	$Content/Body/Split/FilesPane/FileHeader/Save.pressed.connect(save_current)
 	$Content/ActionBar/ActionRow/Validate.pressed.connect(_validate_directory)
+	_add_dialog.files_selected.connect(_add_files)
+	_confirm_delete.confirmed.connect(_confirm_delete_current)
 	_stage_button.pressed.connect(_on_stage_action)
 	$Content/PromptRow/Regen.pressed.connect(regenerate_current)
 	for i in 5:
@@ -71,7 +79,7 @@ func _ready() -> void:
 	add_child(_poll)
 	_refresh_step_bar()
 	_refresh_action_bar()
-	_set_status("Open or init an authoring directory.")
+	_set_status("Init creates the workspace next to your project.")
 
 func authoring_dir_for_project(project_path: String) -> String:
 	if project_path.strip_edges().is_empty():
@@ -135,14 +143,15 @@ func _open_dialog() -> void:
 	_dir_dialog.popup_centered_ratio(0.5)
 
 func _init_directory() -> void:
-	if directory.is_empty():
-		_open_dialog()
-		return
-	var result: Dictionary = _bridge.init_directory(directory)
-	_show_bridge(result, "Initialized " + directory)
+	var target := directory
+	if target.is_empty():
+		var editor = get_parent().get_node_or_null("NodeMapEditor")
+		var project_path := str(editor.get_project_path()) if editor != null else ""
+		target = authoring_dir_for_project(project_path)
+	var result: Dictionary = _bridge.init_directory(target)
+	_show_bridge(result, "Initialized " + target)
 	if result.ok:
-		set_directory(directory)
-
+		set_directory(target)
 func _validate_directory() -> void:
 	if directory.is_empty():
 		_set_status("No authoring directory.", "error")
@@ -219,6 +228,7 @@ func _on_file_selected(index: int) -> void:
 	current_file = _files.get_item_text(index)
 	_editor.text = load_relative(current_file)
 	_dirty = false
+	_refresh_action_bar()
 
 func _collect_files(root: String, prefix: String, found: PackedStringArray) -> void:
 	var access := DirAccess.open(root if prefix.is_empty() else root.path_join(prefix))
@@ -246,6 +256,59 @@ func _show_bridge(result: Dictionary, success: String) -> void:
 	var diagnostics: Array = result.get("diagnostics", [])
 	_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else "Authoring command failed", "error")
 
+
+func _add_file_dialog() -> void:
+	if directory.is_empty():
+		_set_status("Init or open an authoring directory first.", "info")
+		return
+	_add_dialog.popup_centered_ratio(0.5)
+
+func _add_files(paths: PackedStringArray) -> void:
+	var added: PackedStringArray = PackedStringArray()
+	for source in paths:
+		var target_name := "outline.md" if _current_step == 0 else source.get_file()
+		var relative := target_name if STEP_DIRS[_current_step].is_empty() else STEP_DIRS[_current_step].path_join(target_name)
+		var error := DirAccess.copy_absolute(source, directory.path_join(relative))
+		if error == OK:
+			added.append(relative)
+		else:
+			_set_status("Could not add " + source + " (error %d)" % error, "error")
+			return
+	refresh_files()
+	if not added.is_empty():
+		_select_file(added[-1])
+		_set_status("Added " + "\n".join(added), "success")
+
+func _delete_current() -> void:
+	if current_file.is_empty():
+		_set_status("No file selected.", "info")
+		return
+	_confirm_delete.dialog_text = "Delete " + current_file + "?"
+	_confirm_delete.popup_centered()
+
+func _confirm_delete_current() -> void:
+	if current_file.is_empty():
+		return
+	var removed := current_file
+	var error := DirAccess.remove_absolute(directory.path_join(removed))
+	if error != OK:
+		_set_status("Could not delete " + removed + " (error %d)" % error, "error")
+		return
+	current_file = ""
+	_editor.text = ""
+	_dirty = false
+	refresh_files()
+	if _files.item_count > 0:
+		_files.select(0)
+		_on_file_selected(0)
+	_set_status("Deleted " + removed, "success")
+
+func _select_file(relative: String) -> void:
+	for index in _files.item_count:
+		if _files.get_item_text(index) == relative:
+			_files.select(index)
+			_on_file_selected(index)
+			return
 
 func regenerate_current() -> void:
 	save_current()
@@ -490,6 +553,9 @@ func _refresh_action_bar() -> void:
 	_stage_button.text = STEP_ACTIONS[_current_step]
 	_stage_button.disabled = _busy or (_current_step == 4 and not FileAccess.file_exists(directory.path_join("ir").path_join("story.json")))
 	_prompt_row.visible = (_current_step == 2)
+	$Content/Body/Split/FilesPane/FileHeader/Add.disabled = directory.is_empty()
+	$Content/Body/Split/FilesPane/FileHeader/Delete.disabled = current_file.is_empty()
+	$Content/Body/Split/FilesPane/FileHeader/Save.disabled = current_file.is_empty()
 
 func _on_stage_action() -> void:
 	if _current_step >= 4:
