@@ -570,15 +570,16 @@ func _refresh_action_bar() -> void:
 	_stage_button.text = STEP_ACTIONS[_current_step]
 	_stage_button.disabled = _busy or (_current_step == 4 and not FileAccess.file_exists(directory.path_join("ir").path_join("story.json")))
 	_prompt_row.visible = (_current_step == 2)
-	_continue_button.visible = (_current_step == 3)
+	_continue_button.visible = (_current_step == 2 or _current_step == 3)
 	_continue_button.disabled = _busy
 	$Content/Body/Split/FilesPane/FileHeader/Add.disabled = directory.is_empty()
 	$Content/Body/Split/FilesPane/FileHeader/Delete.disabled = current_file.is_empty()
 	$Content/Body/Split/FilesPane/FileHeader/Save.disabled = current_file.is_empty()
 
 func _skip_review() -> void:
-	if _busy or directory.is_empty() or _current_step != 3:
+	if _busy or directory.is_empty() or _current_step < 2 or _current_step > 3:
 		return
+	_step_states[2] = "done"
 	_step_states[3] = "done"
 	_current_step = 4
 	if _step_states[4] == "pending":
