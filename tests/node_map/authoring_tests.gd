@@ -13,6 +13,7 @@ func _init() -> void:
 
 func _run() -> void:
 	_test_execute_batch()
+	_test_ir_apply()
 	await _test_authoring_files()
 	if _failures == 0:
 		print("PASS: %d authoring checks" % _checks)
@@ -48,6 +49,43 @@ func _test_execute_batch() -> void:
 	_check(document.get_snapshot() == snapshot, "failed batch restores the document")
 	_check(controller.undo(), "one undo reverts the successful batch")
 	_check(document.get_nodes(graph_id).size() == before_count, "undo restores pre-batch nodes")
+
+func _test_ir_apply() -> void:
+	var story := {
+		"format": "gel.story-ir",
+		"formatVersion": 1,
+		"entryScene": "prologue",
+		"scenes": [
+			{
+				"sceneId": "prologue",
+				"title": "序章",
+				"nodes": [
+					{"id": "d1", "type": "gel.dialogue", "text": "The station is quiet."},
+					{"id": "out1", "type": "gel.graph_output", "interfaceId": "continue"},
+				],
+				"links": [["entry", "out", "d1", "in"], ["d1", "next", "out1", "in"]],
+			},
+			{
+				"sceneId": "ending",
+				"title": "结局",
+				"nodes": [{"id": "end", "type": "gel.end_story"}],
+				"links": [["entry", "out", "end", "in"]],
+			},
+		],
+		"routes": {"prologue": {"continue": "ending"}},
+	}
+	var document = Document.new(Builtins.create_registry())
+	var controller = Controller.new(document)
+	var Applier := preload("res://node_map/compiler/story_ir_applier.gd")
+	var applied: Dictionary = Applier.new().apply_story(controller, story)
+	_check(applied.ok, "story IR applies: " + str(applied.get("diagnostics", [])))
+	_check(document.validate_self().is_empty(), "applied document is structurally valid")
+	var Compiler := preload("res://node_map/compiler/node_map_compiler.gd")
+	var compiled: Dictionary = Compiler.new().compile(document)
+	_check(compiled.ok, "applied document compiles: " + str(compiled.get("diagnostics", [])))
+	if compiled.ok:
+		_check("ctx.dialogue:narrate(\"The station is quiet.\")" in str(compiled.scripts["scenes/prologue/main.lua"]), "applied dialogue compiles to narration")
+		_check("ctx.flow:end_story()" in str(compiled.scripts["scenes/ending/main.lua"]), "applied ending compiles to end_story")
 
 func _test_authoring_files() -> void:
 	var panel = AUTHORING.instantiate()

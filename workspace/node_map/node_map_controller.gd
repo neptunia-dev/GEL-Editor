@@ -40,6 +40,19 @@ func execute_batch(commands: Array) -> Dictionary:
 	diagnostics_changed.emit([])
 	return {"ok": true, "diagnostics": [], "results": applied}
 
+## 在一个撤销快照里跑依赖前一步 created_id 的导入工作。
+func transact(work: Callable) -> Dictionary:
+	var before: Dictionary = document.get_snapshot()
+	var result: Variant = work.call()
+	if typeof(result) != TYPE_DICTIONARY or not bool(result.get("ok", false)):
+		document.restore_snapshot(before)
+		var failure: Dictionary = result if typeof(result) == TYPE_DICTIONARY else {"ok": false, "diagnostics": []}
+		diagnostics_changed.emit(failure.get("diagnostics", []))
+		return failure
+	_record_history(before, document.get_snapshot(), {"op": "batch"})
+	diagnostics_changed.emit([])
+	return result
+
 func _record_history(before: Dictionary, after: Dictionary, command: Dictionary) -> void:
 	if before == after:
 		return

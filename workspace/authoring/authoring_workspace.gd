@@ -1,7 +1,7 @@
 extends HSplitContainer
 
 const BRIDGE := preload("res://node_map/integration/agent_cli_bridge.gd")
-
+const APPLIER := preload("res://node_map/compiler/story_ir_applier.gd")
 signal status_changed(message: String)
 
 var directory := ""
@@ -25,6 +25,8 @@ func _ready() -> void:
 	$Main/Toolbar/Scenes.pressed.connect(func(): _start_stage("scenes"))
 	$Main/Toolbar/Scripts.pressed.connect(func(): _start_stage("scripts"))
 	$Main/Toolbar/Review.pressed.connect(func(): _start_stage("review"))
+	$Main/Toolbar/IR.pressed.connect(func(): _start_stage("ir"))
+	$Main/Toolbar/Apply.pressed.connect(apply_current_ir)
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
@@ -136,6 +138,9 @@ func _on_poll() -> void:
 			_set_status("Review scripts/*.md, then run Review.")
 		elif stage == "review":
 			_set_status("Review finished. Generate IR when ready.")
+		elif stage == "ir":
+			apply_current_ir()
+			return
 		else:
 			_set_status("Finished " + stage + ".")
 	else:
@@ -174,6 +179,47 @@ func _show_bridge(result: Dictionary, success: String) -> void:
 		return
 	var diagnostics: Array = result.get("diagnostics", [])
 	_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else "Authoring command failed")
+
+
+func apply_current_ir() -> Dictionary:
+	if directory.is_empty():
+		_set_status("No authoring directory.")
+		return {"ok": false}
+	var path := directory.path_join("ir").path_join("story.json")
+	if not FileAccess.file_exists(path):
+		_set_status("Missing ir/story.json")
+		return {"ok": false}
+	var file := FileAccess.open(path, FileAccess.READ)
+	var json := JSON.new()
+	if file == null or json.parse(file.get_as_text()) != OK or not json.data is Dictionary:
+		_set_status("Invalid ir/story.json")
+		return {"ok": false}
+	var editor = get_parent().get_node_or_null("NodeMapEditor")
+	if editor == null:
+		_set_status("Node Map editor is missing.")
+		return {"ok": false}
+	editor.new_project()
+	var applied: Dictionary = APPLIER.new().apply_story(editor.controller, json.data)
+	if not applied.ok:
+		var diagnostics: Array = applied.get("diagnostics", [])
+		_set_status(str(diagnostics[0].get("message", "IR apply failed")) if not diagnostics.is_empty() else "IR apply failed")
+		return applied
+	var project_path := _project_path()
+	editor.save_project(project_path)
+	var exported: Dictionary = editor.export_runtime_package(directory.path_join("runtime-package"))
+	if get_parent() is TabContainer:
+		get_parent().current_tab = 0
+	if exported.ok:
+		_set_status("Applied IR, saved project, exported Runtime Package.")
+	else:
+		var diagnostics: Array = exported.get("diagnostics", [])
+		_set_status(str(diagnostics[0].get("message", "Export failed")) if not diagnostics.is_empty() else "Export failed")
+	return {"ok": exported.ok, "applied": applied, "exported": exported}
+
+func _project_path() -> String:
+	if directory.ends_with(".authoring"):
+		return directory.substr(0, directory.length() - ".authoring".length()) + ".gelproj"
+	return directory.path_join("story.gelproj")
 
 func _set_status(message: String) -> void:
 	_status.text = message
