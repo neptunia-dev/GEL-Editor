@@ -2,127 +2,231 @@
 
 [ext_resource type="Script" path="res://workspace/authoring/authoring_workspace.gd" id="1"]
 
-[node name="AuthoringWorkspace" type="VBoxContainer"]
+[sub_resource type="StyleBoxFlat" id="step_bar_bg"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="step_normal"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+
+[sub_resource type="StyleBoxFlat" id="step_hover"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+bg_color = Color(0.188235, 0.188235, 0.188235, 1)
+border_width_bottom = 1
+border_color = Color(0.290196, 0.290196, 0.290196, 1)
+
+[sub_resource type="StyleBoxFlat" id="step_current"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 2.0
+bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+border_width_bottom = 2
+border_color = Color(0.341176, 0.588235, 0.901961, 1)
+
+[sub_resource type="StyleBoxFlat" id="status_banner"]
+content_margin_left = 10.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+border_width_left = 3
+border_color = Color(0.4, 0.4, 0.4, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="action_bar_bg"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+border_width_top = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[sub_resource type="StyleBoxFlat" id="body_panel"]
+bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.219608, 0.219608, 0.219608, 1)
+
+[node name="AuthoringWorkspace" type="MarginContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
 script = ExtResource("1")
 
-[node name="StepBar" type="HBoxContainer" parent="."]
+[node name="Content" type="VBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 6
 
-[node name="Step0" type="Button" parent="StepBar"]
-custom_minimum_size = Vector2(0, 32)
+[node name="Heading" type="Label" parent="Content"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
+theme_override_font_sizes/font_size = 12
+text = "Authoring"
+
+[node name="HeadingRule" type="HSeparator" parent="Content"]
+layout_mode = 2
+
+[node name="StepBar" type="PanelContainer" parent="Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("step_bar_bg")
+
+[node name="StepRow" type="HBoxContainer" parent="Content/StepBar"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Step0" type="Button" parent="Content/StepBar/StepRow"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("step_normal")
+theme_override_styles/hover = SubResource("step_hover")
+theme_override_styles/pressed = SubResource("step_current")
+theme_override_styles/focus = SubResource("step_normal")
 toggle_mode = true
 text = "1. Outline"
 
-[node name="Step1" type="Button" parent="StepBar"]
-custom_minimum_size = Vector2(0, 32)
+[node name="Step1" type="Button" parent="Content/StepBar/StepRow"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("step_normal")
+theme_override_styles/hover = SubResource("step_hover")
+theme_override_styles/pressed = SubResource("step_current")
+theme_override_styles/focus = SubResource("step_normal")
 toggle_mode = true
 text = "2. Scenes"
 
-[node name="Step2" type="Button" parent="StepBar"]
-custom_minimum_size = Vector2(0, 32)
+[node name="Step2" type="Button" parent="Content/StepBar/StepRow"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("step_normal")
+theme_override_styles/hover = SubResource("step_hover")
+theme_override_styles/pressed = SubResource("step_current")
+theme_override_styles/focus = SubResource("step_normal")
 toggle_mode = true
 text = "3. Scripts"
 
-[node name="Step3" type="Button" parent="StepBar"]
-custom_minimum_size = Vector2(0, 32)
+[node name="Step3" type="Button" parent="Content/StepBar/StepRow"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("step_normal")
+theme_override_styles/hover = SubResource("step_hover")
+theme_override_styles/pressed = SubResource("step_current")
+theme_override_styles/focus = SubResource("step_normal")
 toggle_mode = true
 text = "4. Review"
 
-[node name="Step4" type="Button" parent="StepBar"]
-custom_minimum_size = Vector2(0, 32)
+[node name="Step4" type="Button" parent="Content/StepBar/StepRow"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("step_normal")
+theme_override_styles/hover = SubResource("step_hover")
+theme_override_styles/pressed = SubResource("step_current")
+theme_override_styles/focus = SubResource("step_normal")
 toggle_mode = true
 text = "5. IR"
 
-[node name="StatusBanner" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(0, 36)
+[node name="StatusBanner" type="PanelContainer" parent="Content"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+theme_override_styles/panel = SubResource("status_banner")
 
-[node name="StatusLabel" type="Label" parent="StatusBanner"]
+[node name="StatusLabel" type="Label" parent="Content/StatusBanner"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 12
 text = "Open or init an authoring directory."
 text_overrun_behavior = 3
 vertical_alignment = 1
 
-[node name="Body" type="HSplitContainer" parent="."]
+[node name="Body" type="PanelContainer" parent="Content"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_styles/panel = SubResource("body_panel")
+
+[node name="Split" type="HSplitContainer" parent="Content/Body"]
+layout_mode = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 split_offset = 200
 
-[node name="Files" type="ItemList" parent="Body"]
+[node name="Files" type="ItemList" parent="Content/Body/Split"]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 
-[node name="Editor" type="TextEdit" parent="Body"]
+[node name="Editor" type="TextEdit" parent="Content/Body/Split"]
 layout_mode = 2
 size_flags_horizontal = 3
 wrap_mode = 1
 
-[node name="ActionBar" type="HBoxContainer" parent="."]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="Open" type="Button" parent="ActionBar"]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "Open"
-
-[node name="Init" type="Button" parent="ActionBar"]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "Init"
-
-[node name="Save" type="Button" parent="ActionBar"]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "Save"
-
-[node name="Validate" type="Button" parent="ActionBar"]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "Validate"
-
-[node name="Spacer" type="Control" parent="ActionBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="StageButton" type="Button" parent="ActionBar"]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "▶ Generate Scenes"
-
-[node name="PromptRow" type="HBoxContainer" parent="."]
+[node name="PromptRow" type="HBoxContainer" parent="Content"]
 visible = false
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
-[node name="Prompt" type="LineEdit" parent="PromptRow"]
+[node name="Prompt" type="LineEdit" parent="Content/PromptRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Regen prompt (optional). Box-select nodes on the Node Map to focus."
 
-[node name="Regen" type="Button" parent="PromptRow"]
-custom_minimum_size = Vector2(0, 30)
+[node name="Regen" type="Button" parent="Content/PromptRow"]
 layout_mode = 2
 tooltip_text = "Regenerate the current scene from the prompt, selection, or edited script."
 text = "↻ Regen"
+
+[node name="ActionBar" type="PanelContainer" parent="Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("action_bar_bg")
+
+[node name="ActionRow" type="HBoxContainer" parent="Content/ActionBar"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Open" type="Button" parent="Content/ActionBar/ActionRow"]
+layout_mode = 2
+flat = true
+text = "Open"
+
+[node name="Init" type="Button" parent="Content/ActionBar/ActionRow"]
+layout_mode = 2
+flat = true
+text = "Init"
+
+[node name="Save" type="Button" parent="Content/ActionBar/ActionRow"]
+layout_mode = 2
+flat = true
+text = "Save"
+
+[node name="Validate" type="Button" parent="Content/ActionBar/ActionRow"]
+layout_mode = 2
+flat = true
+text = "Validate"
+
+[node name="Spacer" type="Control" parent="Content/ActionBar/ActionRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StageButton" type="Button" parent="Content/ActionBar/ActionRow"]
+layout_mode = 2
+text = "▶ Generate Scenes"
 
 [node name="DirectoryDialog" type="FileDialog" parent="."]
 title = "Open Authoring Directory"

@@ -1,4 +1,4 @@
-extends VBoxContainer
+extends MarginContainer
 
 const BRIDGE := preload("res://node_map/integration/agent_cli_bridge.gd")
 const APPLIER := preload("res://node_map/compiler/story_ir_applier.gd")
@@ -8,6 +8,12 @@ const STEP_NAMES: PackedStringArray = ["1. Outline", "2. Scenes", "3. Scripts", 
 const STEP_FILE_PREFIXES: PackedStringArray = ["outline", "scenes/", "scripts/", "review/", "ir/"]
 const STEP_ACTIONS: PackedStringArray = ["▶ Generate Scenes", "▶ Generate Scripts", "▶ Review", "▶ Generate IR", "▶ Apply to Canvas"]
 const STEP_STAGES: PackedStringArray = ["scenes", "scripts", "review", "ir", ""]
+
+const ACCENT_BLUE := Color(0.341176, 0.588235, 0.901961, 1)
+const TEXT_BRIGHT := Color(0.835294, 0.835294, 0.835294, 1)
+const TEXT_MUTED := Color(0.572549, 0.572549, 0.572549, 1)
+const TEXT_GREEN := Color(0.4, 0.8, 0.45, 1)
+const TEXT_RED := Color(0.95, 0.58, 0.54, 1)
 
 var directory := ""
 var current_file := ""
@@ -24,37 +30,40 @@ var _current_step := 0
 var _step_states: PackedStringArray = PackedStringArray(["current", "pending", "pending", "pending", "pending"])
 var _status_style: StyleBoxFlat
 
-@onready var _files: ItemList = $Body/Files
-@onready var _editor: TextEdit = $Body/Editor
-@onready var _status_banner: PanelContainer = $StatusBanner
-@onready var _status_label: Label = $StatusBanner/StatusLabel
-@onready var _prompt_row: HBoxContainer = $PromptRow
-@onready var _prompt: LineEdit = $PromptRow/Prompt
-@onready var _stage_button: Button = $ActionBar/StageButton
+@onready var _files: ItemList = $Content/Body/Split/Files
+@onready var _editor: TextEdit = $Content/Body/Split/Editor
+@onready var _status_banner: PanelContainer = $Content/StatusBanner
+@onready var _status_label: Label = $Content/StatusBanner/StatusLabel
+@onready var _prompt_row: HBoxContainer = $Content/PromptRow
+@onready var _prompt: LineEdit = $Content/PromptRow/Prompt
+@onready var _stage_button: Button = $Content/ActionBar/ActionRow/StageButton
 @onready var _dir_dialog: FileDialog = $DirectoryDialog
 
 func _ready() -> void:
-	$ActionBar/Open.pressed.connect(_open_dialog)
-	$ActionBar/Init.pressed.connect(_init_directory)
-	$ActionBar/Save.pressed.connect(save_current)
-	$ActionBar/Validate.pressed.connect(_validate_directory)
+	$Content/ActionBar/ActionRow/Open.pressed.connect(_open_dialog)
+	$Content/ActionBar/ActionRow/Init.pressed.connect(_init_directory)
+	$Content/ActionBar/ActionRow/Save.pressed.connect(save_current)
+	$Content/ActionBar/ActionRow/Validate.pressed.connect(_validate_directory)
 	_stage_button.pressed.connect(_on_stage_action)
-	$PromptRow/Regen.pressed.connect(regenerate_current)
+	$Content/PromptRow/Regen.pressed.connect(regenerate_current)
 	for i in 5:
-		var step_button: Button = $StepBar.get_child(i)
+		var step_button: Button = $Content/StepBar/StepRow.get_child(i)
 		step_button.pressed.connect(_on_step_pressed.bind(i))
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
 	_status_style = StyleBoxFlat.new()
-	_status_style.corner_radius_top_left = 4
-	_status_style.corner_radius_top_right = 4
-	_status_style.corner_radius_bottom_left = 4
-	_status_style.corner_radius_bottom_right = 4
-	_status_style.content_margin_left = 12
-	_status_style.content_margin_right = 12
-	_status_style.content_margin_top = 6
-	_status_style.content_margin_bottom = 6
+	_status_style.content_margin_left = 10
+	_status_style.content_margin_top = 5
+	_status_style.content_margin_right = 10
+	_status_style.content_margin_bottom = 5
+	_status_style.bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+	_status_style.border_width_left = 3
+	_status_style.corner_radius_top_left = 2
+	_status_style.corner_radius_top_right = 2
+	_status_style.corner_radius_bottom_right = 2
+	_status_style.corner_radius_bottom_left = 2
+	_status_style.border_color = Color(0.4, 0.4, 0.4, 1)
 	_status_banner.add_theme_stylebox_override("panel", _status_style)
 	_poll = Timer.new()
 	_poll.wait_time = 0.15
@@ -407,17 +416,17 @@ func _set_status(message: String, level := "info") -> void:
 	_status_label.text = message
 	match level:
 		"error":
-			_status_style.bg_color = Color(0.45, 0.12, 0.12, 1)
-			_status_label.add_theme_color_override("font_color", Color(1, 0.85, 0.85, 1))
+			_status_style.border_color = TEXT_RED
+			_status_label.add_theme_color_override("font_color", TEXT_RED)
 		"running":
-			_status_style.bg_color = Color(0.12, 0.25, 0.45, 1)
-			_status_label.add_theme_color_override("font_color", Color(0.85, 0.92, 1, 1))
+			_status_style.border_color = ACCENT_BLUE
+			_status_label.add_theme_color_override("font_color", TEXT_BRIGHT)
 		"success":
-			_status_style.bg_color = Color(0.12, 0.35, 0.18, 1)
-			_status_label.add_theme_color_override("font_color", Color(0.85, 1, 0.88, 1))
+			_status_style.border_color = TEXT_GREEN
+			_status_label.add_theme_color_override("font_color", TEXT_GREEN)
 		_:
-			_status_style.bg_color = Color(0.18, 0.18, 0.18, 1)
-			_status_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1))
+			_status_style.border_color = Color(0.4, 0.4, 0.4, 1)
+			_status_label.add_theme_color_override("font_color", TEXT_MUTED)
 	status_changed.emit(message)
 
 # --- Step bar ---
@@ -445,7 +454,7 @@ func _mark_step_error() -> void:
 
 func _refresh_step_bar() -> void:
 	for i in 5:
-		var button: Button = $StepBar.get_child(i)
+		var button: Button = $Content/StepBar/StepRow.get_child(i)
 		var prefix := ""
 		match _step_states[i]:
 			"done":
@@ -458,13 +467,21 @@ func _refresh_step_bar() -> void:
 		button.button_pressed = (i == _current_step)
 		match _step_states[i]:
 			"current":
-				button.add_theme_color_override("font_color", Color(0.4, 0.7, 1, 1))
+				button.add_theme_color_override("font_color", ACCENT_BLUE)
+				button.add_theme_color_override("font_pressed_color", ACCENT_BLUE)
+				button.add_theme_color_override("font_hover_color", ACCENT_BLUE)
 			"done":
-				button.add_theme_color_override("font_color", Color(0.4, 0.8, 0.45, 1))
+				button.add_theme_color_override("font_color", TEXT_GREEN)
+				button.add_theme_color_override("font_pressed_color", TEXT_GREEN)
+				button.add_theme_color_override("font_hover_color", TEXT_GREEN)
 			"error":
-				button.add_theme_color_override("font_color", Color(1, 0.45, 0.4, 1))
+				button.add_theme_color_override("font_color", TEXT_RED)
+				button.add_theme_color_override("font_pressed_color", TEXT_RED)
+				button.add_theme_color_override("font_hover_color", TEXT_RED)
 			_:
-				button.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 1))
+				button.add_theme_color_override("font_color", TEXT_MUTED)
+				button.add_theme_color_override("font_pressed_color", TEXT_MUTED)
+				button.add_theme_color_override("font_hover_color", TEXT_MUTED)
 
 # --- Action bar ---
 
