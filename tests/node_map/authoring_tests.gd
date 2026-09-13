@@ -114,6 +114,24 @@ func _test_ir_events() -> void:
 	controller.commit_external_batch()
 	_check(document.validate_self().is_empty(), "streamed document is structurally valid")
 	var compiled: Dictionary = preload("res://node_map/compiler/node_map_compiler.gd").new().compile(document)
+	var reopened = Document.new(Builtins.create_registry())
+	var reopening = Controller.new(reopened)
+	var reopen_session: Dictionary = applier.create_session()
+	reopening.begin_external_batch()
+	for event in [
+		{"op": "scene", "sceneId": "prologue", "title": "序章"},
+		{"op": "story", "entryScene": "prologue"},
+		{"op": "scene", "sceneId": "prologue", "title": "序章"},
+		{"op": "node", "id": "d1", "type": "gel.dialogue", "text": "The station is quiet."},
+		{"op": "node", "id": "end", "type": "gel.end_story"},
+		{"op": "link", "from": ["entry", "out"], "to": ["d1", "in"]},
+		{"op": "link", "from": ["d1", "next"], "to": ["end", "in"]},
+		{"op": "done"},
+	]:
+		var applied: Dictionary = applier.apply_event(reopened, reopen_session, event)
+		_check(applied.ok, "reopen IR event %s applies: %s" % [str(event.get("op", "")), str(applied.get("diagnostics", []))])
+	reopening.commit_external_batch()
+	_check(reopened.validate_self().is_empty(), "reopened scene stream is structurally valid")
 	_check(compiled.ok, "streamed document compiles: " + str(compiled.get("diagnostics", [])))
 	var rolled = Document.new(Builtins.create_registry())
 	var rolling = Controller.new(rolled)

@@ -213,16 +213,19 @@ func _configure_node(document, node_id: String, node: Dictionary, choice_ports: 
 			return {"ok": true, "diagnostics": []}
 
 func _open_scene(document, session: Dictionary, event: Dictionary) -> Dictionary:
-	var created: Dictionary = document.execute({"op": "create_node", "type_id": "gel.scene", "graph_id": document.root_graph_id, "position": session.cursor})
-	if not created.ok:
-		return created
-	session.cursor = Vector2(session.cursor.x + 400, session.cursor.y)
-	var node_id := str(created.created_node_id)
 	var scene_id := str(event.get("sceneId", ""))
 	var title := str(event.get("title", scene_id))
-	var named: Dictionary = document.execute({"op": "set_parameter", "node_id": node_id, "parameter_id": "scene_id", "value": scene_id})
-	if not named.ok:
-		return named
+	var node_id := str(session.scene_nodes.get(scene_id, ""))
+	if node_id.is_empty():
+		var created: Dictionary = document.execute({"op": "create_node", "type_id": "gel.scene", "graph_id": document.root_graph_id, "position": session.cursor})
+		if not created.ok:
+			return created
+		session.cursor = Vector2(session.cursor.x + 400, session.cursor.y)
+		node_id = str(created.created_node_id)
+		var named: Dictionary = document.execute({"op": "set_parameter", "node_id": node_id, "parameter_id": "scene_id", "value": scene_id})
+		if not named.ok:
+			return named
+		session.scene_nodes[scene_id] = node_id
 	var titled: Dictionary = document.execute({"op": "set_parameter", "node_id": node_id, "parameter_id": "display_name", "value": title})
 	if not titled.ok:
 		return titled
@@ -239,7 +242,6 @@ func _open_scene(document, session: Dictionary, event: Dictionary) -> Dictionary
 	session.column = 0
 	session.output_index = 0
 	session.saw_output = false
-	session.scene_nodes[scene_id] = node_id
 	return {"ok": true, "diagnostics": []}
 
 func _close_scene(document, session: Dictionary) -> Dictionary:
