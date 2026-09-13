@@ -2,88 +2,127 @@
 
 [ext_resource type="Script" path="res://workspace/authoring/authoring_workspace.gd" id="1"]
 
-[node name="AuthoringWorkspace" type="HSplitContainer"]
+[node name="AuthoringWorkspace" type="VBoxContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-split_offset = 220
+theme_override_constants/separation = 8
 script = ExtResource("1")
 
-[node name="Files" type="ItemList" parent="."]
-custom_minimum_size = Vector2(180, 0)
+[node name="StepBar" type="HBoxContainer" parent="."]
 layout_mode = 2
+theme_override_constants/separation = 2
 
-[node name="Main" type="VBoxContainer" parent="."]
+[node name="Step0" type="Button" parent="StepBar"]
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+toggle_mode = true
+text = "1. Outline"
 
-[node name="Toolbar" type="HBoxContainer" parent="Main"]
+[node name="Step1" type="Button" parent="StepBar"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "2. Scenes"
+
+[node name="Step2" type="Button" parent="StepBar"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "3. Scripts"
+
+[node name="Step3" type="Button" parent="StepBar"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "4. Review"
+
+[node name="Step4" type="Button" parent="StepBar"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "5. IR"
+
+[node name="StatusBanner" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="StatusBanner"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Open or init an authoring directory."
+text_overrun_behavior = 3
+vertical_alignment = 1
+
+[node name="Body" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 200
+
+[node name="Files" type="ItemList" parent="Body"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+
+[node name="Editor" type="TextEdit" parent="Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+wrap_mode = 1
+
+[node name="ActionBar" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="Open" type="Button" parent="Main/Toolbar"]
+[node name="Open" type="Button" parent="ActionBar"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Open"
 
-[node name="Init" type="Button" parent="Main/Toolbar"]
+[node name="Init" type="Button" parent="ActionBar"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Init"
 
-[node name="Save" type="Button" parent="Main/Toolbar"]
+[node name="Save" type="Button" parent="ActionBar"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Save"
 
-[node name="Validate" type="Button" parent="Main/Toolbar"]
+[node name="Validate" type="Button" parent="ActionBar"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Validate"
 
-[node name="Scenes" type="Button" parent="Main/Toolbar"]
+[node name="Spacer" type="Control" parent="ActionBar"]
 layout_mode = 2
-tooltip_text = "Generate scene markdown from outline. Review the files before generating scripts."
-text = "Scenes"
+size_flags_horizontal = 3
 
-[node name="Scripts" type="Button" parent="Main/Toolbar"]
+[node name="StageButton" type="Button" parent="ActionBar"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
-tooltip_text = "Generate per-scene scripts after reviewing scene cards."
-text = "Scripts"
+text = "▶ Generate Scenes"
 
-[node name="Review" type="Button" parent="Main/Toolbar"]
+[node name="PromptRow" type="HBoxContainer" parent="."]
+visible = false
 layout_mode = 2
-tooltip_text = "Review scripts for OOC and logic, then patch."
-text = "Review"
+theme_override_constants/separation = 4
 
-[node name="IR" type="Button" parent="Main/Toolbar"]
+[node name="Prompt" type="LineEdit" parent="PromptRow"]
 layout_mode = 2
-tooltip_text = "Generate scene IR JSON from scripts."
-text = "IR"
-
-[node name="Apply" type="Button" parent="Main/Toolbar"]
-layout_mode = 2
-tooltip_text = "Apply IR to the Node Map and export a Runtime Package."
-text = "Apply"
-
-[node name="Regen" type="Button" parent="Main/Toolbar"]
-layout_mode = 2
-tooltip_text = "Regenerate the current scene from the prompt, selection, or edited script."
-text = "Regen"
-
-[node name="Prompt" type="LineEdit" parent="Main"]
-layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "Regen prompt (optional). Box-select nodes on the Node Map to focus."
 
-[node name="Editor" type="TextEdit" parent="Main"]
+[node name="Regen" type="Button" parent="PromptRow"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
-size_flags_vertical = 3
-wrap_mode = 1
-
-[node name="Status" type="Label" parent="Main"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "Open or init an authoring directory."
-text_overrun_behavior = 3
+tooltip_text = "Regenerate the current scene from the prompt, selection, or edited script."
+text = "↻ Regen"
 
 [node name="DirectoryDialog" type="FileDialog" parent="."]
 title = "Open Authoring Directory"

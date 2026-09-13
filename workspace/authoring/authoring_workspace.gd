@@ -1,8 +1,13 @@
-extends HSplitContainer
+extends VBoxContainer
 
 const BRIDGE := preload("res://node_map/integration/agent_cli_bridge.gd")
 const APPLIER := preload("res://node_map/compiler/story_ir_applier.gd")
 signal status_changed(message: String)
+
+const STEP_NAMES: PackedStringArray = ["1. Outline", "2. Scenes", "3. Scripts", "4. Review", "5. IR"]
+const STEP_FILE_PREFIXES: PackedStringArray = ["outline", "scenes/", "scripts/", "review/", "ir/"]
+const STEP_ACTIONS: PackedStringArray = ["▶ Generate Scenes", "▶ Generate Scripts", "▶ Review", "▶ Generate IR", "▶ Apply to Canvas"]
+const STEP_STAGES: PackedStringArray = ["scenes", "scripts", "review", "ir", ""]
 
 var directory := ""
 var current_file := ""
@@ -15,31 +20,48 @@ var _chain: PackedStringArray = PackedStringArray()
 var _stream_offset := 0
 var _ir_session: Dictionary = {}
 var _stream_applier = null
+var _current_step := 0
+var _step_states: PackedStringArray = PackedStringArray(["current", "pending", "pending", "pending", "pending"])
+var _status_style: StyleBoxFlat
 
-@onready var _files: ItemList = $Files
-@onready var _editor: TextEdit = $Main/Editor
-@onready var _status: Label = $Main/Status
-@onready var _prompt: LineEdit = $Main/Prompt
+@onready var _files: ItemList = $Body/Files
+@onready var _editor: TextEdit = $Body/Editor
+@onready var _status_banner: PanelContainer = $StatusBanner
+@onready var _status_label: Label = $StatusBanner/StatusLabel
+@onready var _prompt_row: HBoxContainer = $PromptRow
+@onready var _prompt: LineEdit = $PromptRow/Prompt
+@onready var _stage_button: Button = $ActionBar/StageButton
 @onready var _dir_dialog: FileDialog = $DirectoryDialog
 
 func _ready() -> void:
-	$Main/Toolbar/Open.pressed.connect(_open_dialog)
-	$Main/Toolbar/Init.pressed.connect(_init_directory)
-	$Main/Toolbar/Save.pressed.connect(save_current)
-	$Main/Toolbar/Validate.pressed.connect(_validate_directory)
-	$Main/Toolbar/Scenes.pressed.connect(func(): _start_stage("scenes"))
-	$Main/Toolbar/Scripts.pressed.connect(func(): _start_stage("scripts"))
-	$Main/Toolbar/Review.pressed.connect(func(): _start_stage("review"))
-	$Main/Toolbar/IR.pressed.connect(func(): _start_stage("ir"))
-	$Main/Toolbar/Apply.pressed.connect(apply_current_ir)
-	$Main/Toolbar/Regen.pressed.connect(regenerate_current)
+	$ActionBar/Open.pressed.connect(_open_dialog)
+	$ActionBar/Init.pressed.connect(_init_directory)
+	$ActionBar/Save.pressed.connect(save_current)
+	$ActionBar/Validate.pressed.connect(_validate_directory)
+	_stage_button.pressed.connect(_on_stage_action)
+	$PromptRow/Regen.pressed.connect(regenerate_current)
+	for i in 5:
+		var step_button: Button = $StepBar.get_child(i)
+		step_button.pressed.connect(_on_step_pressed.bind(i))
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
+	_status_style = StyleBoxFlat.new()
+	_status_style.corner_radius_top_left = 4
+	_status_style.corner_radius_top_right = 4
+	_status_style.corner_radius_bottom_left = 4
+	_status_style.corner_radius_bottom_right = 4
+	_status_style.content_margin_left = 12
+	_status_style.content_margin_right = 12
+	_status_style.content_margin_top = 6
+	_status_style.content_margin_bottom = 6
+	_status_banner.add_theme_stylebox_override("panel", _status_style)
 	_poll = Timer.new()
 	_poll.wait_time = 0.15
 	_poll.timeout.connect(_on_poll)
 	add_child(_poll)
+	_refresh_step_bar()
+	_refresh_action_bar()
 	_set_status("Open or init an authoring directory.")
 
 func authoring_dir_for_project(project_path: String) -> String:
@@ -51,10 +73,14 @@ func set_directory(path: String) -> void:
 	directory = path.simplify_path()
 	current_file = ""
 	_dirty = false
+	_current_step = 0
+	_step_states = PackedStringArray(["current", "pending", "pending", "pending", "pending"])
 	refresh_files()
 	if _files.item_count > 0:
 		_files.select(0)
 		_on_file_selected(0)
+	_refresh_step_bar()
+	_refresh_action_bar()
 	_set_status("Opened " + directory)
 
 func list_relative_files() -> PackedStringArray:
@@ -67,8 +93,10 @@ func list_relative_files() -> PackedStringArray:
 
 func refresh_files() -> void:
 	_files.clear()
+	var prefix := STEP_FILE_PREFIXES[_current_step]
 	for relative in list_relative_files():
-		_files.add_item(relative)
+		if prefix.is_empty() or relative.begins_with(prefix) or (prefix == "outline" and relative == "outline.md"):
+			_files.add_item(relative)
 
 func load_relative(relative: String) -> String:
 	var path := directory.path_join(relative)
@@ -86,13 +114,13 @@ func save_relative(relative: String, text: String) -> bool:
 
 func save_current() -> void:
 	if directory.is_empty() or current_file.is_empty():
-		_set_status("No file selected.")
+		_set_status("No file selected.", "info")
 		return
 	if save_relative(current_file, _editor.text):
 		_dirty = false
-		_set_status("Saved " + current_file)
+		_set_status("Saved " + current_file, "success")
 	else:
-		_set_status("Could not save " + current_file)
+		_set_status("Could not save " + current_file, "error")
 
 func _open_dialog() -> void:
 	_dir_dialog.popup_centered_ratio(0.5)
@@ -108,14 +136,14 @@ func _init_directory() -> void:
 
 func _validate_directory() -> void:
 	if directory.is_empty():
-		_set_status("No authoring directory.")
+		_set_status("No authoring directory.", "error")
 		return
 	save_current()
 	_show_bridge(_bridge.validate_directory(directory), "Authoring files are valid.")
 
 func _start_stage(stage: String, extra: Array = []) -> void:
 	if directory.is_empty() or _busy:
-		_set_status("Open an authoring directory first." if directory.is_empty() else "Authoring command already running.")
+		_set_status("Open an authoring directory first." if directory.is_empty() else "Authoring command already running.", "info")
 		return
 	save_current()
 	var started: Dictionary = _bridge.start_author(stage, directory, extra)
@@ -129,8 +157,10 @@ func _start_stage(stage: String, extra: Array = []) -> void:
 	elif stage == "scenes" or stage == "scripts":
 		if get_parent() is TabContainer:
 			get_parent().current_tab = get_parent().get_tab_count() - 1
-	_set_status("Running " + stage + "...")
+	_set_status("Running " + stage + "...", "running")
+	_refresh_action_bar()
 	_poll.start()
+
 func _on_poll() -> void:
 	var status: Dictionary = _bridge.read_status(directory)
 	_refresh_preview(str(status.get("previewFile", "")))
@@ -138,36 +168,41 @@ func _on_poll() -> void:
 		_consume_ir_stream()
 	if str(status.get("stage", "")) != _pending_stage or str(status.get("state", "")) != "done":
 		var message := str(status.get("message", ""))
-		_set_status(message if not message.is_empty() else "Running " + _pending_stage + "...")
+		_set_status(message if not message.is_empty() else "Running " + _pending_stage + "...", "running")
 		return
 	_poll.stop()
 	_busy = false
 	refresh_files()
 	if bool(status.get("ok", false)):
 		var stage := str(status.get("stage", ""))
+		_advance_step()
 		if stage == "scenes":
-			_set_status("Review scenes/*.md, then generate scripts.")
+			_set_status("Review scenes/*.md, then generate scripts.", "success")
 		elif stage == "scripts":
 			if _chain.size() > 0:
 				var next := _chain[0]
 				_chain.remove_at(0)
 				_start_stage(next)
 				return
-			_set_status("Review scripts/*.md, then run Review.")
+			_set_status("Review scripts/*.md, then run Review.", "success")
 		elif stage == "review":
-			_set_status("Review finished. Generate IR when ready.")
+			_set_status("Review finished. Generate IR when ready.", "success")
 		elif stage == "ir":
 			_finish_ir_preview(true)
 			_save_and_export()
 			return
 		else:
-			_set_status("Finished " + stage + ".")
+			_set_status("Finished " + stage + ".", "success")
 	else:
 		_chain.clear()
 		if _pending_stage == "ir":
 			_finish_ir_preview(false)
 		var diagnostics: Array = status.get("diagnostics", [])
-		_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else str(status.get("message", "Authoring command failed")))
+		var error_message := str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else str(status.get("message", "Authoring command failed"))
+		_set_status(error_message, "error")
+		_mark_step_error()
+	_refresh_step_bar()
+	_refresh_action_bar()
 
 func _on_file_selected(index: int) -> void:
 	if _dirty and not current_file.is_empty():
@@ -197,10 +232,10 @@ func _collect_files(root: String, prefix: String, found: PackedStringArray) -> v
 
 func _show_bridge(result: Dictionary, success: String) -> void:
 	if result.ok:
-		_set_status(success)
+		_set_status(success, "success")
 		return
 	var diagnostics: Array = result.get("diagnostics", [])
-	_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else "Authoring command failed")
+	_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else "Authoring command failed", "error")
 
 
 func regenerate_current() -> void:
@@ -208,7 +243,7 @@ func regenerate_current() -> void:
 	var editor = get_parent().get_node_or_null("NodeMapEditor")
 	var scene_id := _target_scene_id(editor)
 	if scene_id.is_empty():
-		_set_status("Select a scene file or open a scene graph.")
+		_set_status("Select a scene file or open a scene graph.", "info")
 		return
 	var prompt := _prompt.text.strip_edges()
 	var focus := prompt
@@ -310,7 +345,7 @@ func _consume_ir_stream() -> void:
 			continue
 		var applied: Dictionary = _stream_applier.apply_event(editor.document, _ir_session, json.data)
 		if not applied.ok:
-			_set_status(str(applied.get("diagnostics", [{}])[0].get("message", "IR event failed") if not applied.get("diagnostics", []).is_empty() else "IR event failed"))
+			_set_status(str(applied.get("diagnostics", [{}])[0].get("message", "IR event failed") if not applied.get("diagnostics", []).is_empty() else "IR event failed"), "error")
 			break
 	_stream_offset = file.get_position()
 	if editor != null:
@@ -323,33 +358,33 @@ func _save_and_export() -> void:
 	editor.save_project(_project_path())
 	var exported: Dictionary = editor.export_runtime_package(directory.path_join("runtime-package"))
 	if exported.ok:
-		_set_status("Applied IR, saved project, exported Runtime Package.")
+		_set_status("Applied IR, saved project, exported Runtime Package.", "success")
 	else:
 		var diagnostics: Array = exported.get("diagnostics", [])
-		_set_status(str(diagnostics[0].get("message", "Export failed")) if not diagnostics.is_empty() else "Export failed")
+		_set_status(str(diagnostics[0].get("message", "Export failed")) if not diagnostics.is_empty() else "Export failed", "error")
 
 func apply_current_ir() -> Dictionary:
 	if directory.is_empty():
-		_set_status("No authoring directory.")
+		_set_status("No authoring directory.", "error")
 		return {"ok": false}
 	var path := directory.path_join("ir").path_join("story.json")
 	if not FileAccess.file_exists(path):
-		_set_status("Missing ir/story.json")
+		_set_status("Missing ir/story.json", "error")
 		return {"ok": false}
 	var file := FileAccess.open(path, FileAccess.READ)
 	var json := JSON.new()
 	if file == null or json.parse(file.get_as_text()) != OK or not json.data is Dictionary:
-		_set_status("Invalid ir/story.json")
+		_set_status("Invalid ir/story.json", "error")
 		return {"ok": false}
 	var editor = get_parent().get_node_or_null("NodeMapEditor")
 	if editor == null:
-		_set_status("Node Map editor is missing.")
+		_set_status("Node Map editor is missing.", "error")
 		return {"ok": false}
 	editor.new_project()
 	var applied: Dictionary = APPLIER.new().apply_story(editor.controller, json.data)
 	if not applied.ok:
 		var diagnostics: Array = applied.get("diagnostics", [])
-		_set_status(str(diagnostics[0].get("message", "IR apply failed")) if not diagnostics.is_empty() else "IR apply failed")
+		_set_status(str(diagnostics[0].get("message", "IR apply failed")) if not diagnostics.is_empty() else "IR apply failed", "error")
 		return applied
 	var project_path := _project_path()
 	editor.save_project(project_path)
@@ -357,10 +392,10 @@ func apply_current_ir() -> Dictionary:
 	if get_parent() is TabContainer:
 		get_parent().current_tab = 0
 	if exported.ok:
-		_set_status("Applied IR, saved project, exported Runtime Package.")
+		_set_status("Applied IR, saved project, exported Runtime Package.", "success")
 	else:
 		var diagnostics: Array = exported.get("diagnostics", [])
-		_set_status(str(diagnostics[0].get("message", "Export failed")) if not diagnostics.is_empty() else "Export failed")
+		_set_status(str(diagnostics[0].get("message", "Export failed")) if not diagnostics.is_empty() else "Export failed", "error")
 	return {"ok": exported.ok, "applied": applied, "exported": exported}
 
 func _project_path() -> String:
@@ -368,6 +403,78 @@ func _project_path() -> String:
 		return directory.substr(0, directory.length() - ".authoring".length()) + ".gelproj"
 	return directory.path_join("story.gelproj")
 
-func _set_status(message: String) -> void:
-	_status.text = message
+func _set_status(message: String, level := "info") -> void:
+	_status_label.text = message
+	match level:
+		"error":
+			_status_style.bg_color = Color(0.45, 0.12, 0.12, 1)
+			_status_label.add_theme_color_override("font_color", Color(1, 0.85, 0.85, 1))
+		"running":
+			_status_style.bg_color = Color(0.12, 0.25, 0.45, 1)
+			_status_label.add_theme_color_override("font_color", Color(0.85, 0.92, 1, 1))
+		"success":
+			_status_style.bg_color = Color(0.12, 0.35, 0.18, 1)
+			_status_label.add_theme_color_override("font_color", Color(0.85, 1, 0.88, 1))
+		_:
+			_status_style.bg_color = Color(0.18, 0.18, 0.18, 1)
+			_status_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1))
 	status_changed.emit(message)
+
+# --- Step bar ---
+
+func _on_step_pressed(index: int) -> void:
+	if index == _current_step:
+		return
+	_current_step = index
+	if _step_states[index] == "pending":
+		_step_states[index] = "current"
+	refresh_files()
+	_refresh_step_bar()
+	_refresh_action_bar()
+
+func _advance_step() -> void:
+	if _current_step >= 4:
+		return
+	_step_states[_current_step] = "done"
+	_current_step += 1
+	_step_states[_current_step] = "current"
+	refresh_files()
+
+func _mark_step_error() -> void:
+	_step_states[_current_step] = "error"
+
+func _refresh_step_bar() -> void:
+	for i in 5:
+		var button: Button = $StepBar.get_child(i)
+		var prefix := ""
+		match _step_states[i]:
+			"done":
+				prefix = "✓ "
+			"error":
+				prefix = "✗ "
+			_:
+				prefix = ""
+		button.text = prefix + STEP_NAMES[i]
+		button.button_pressed = (i == _current_step)
+		match _step_states[i]:
+			"current":
+				button.add_theme_color_override("font_color", Color(0.4, 0.7, 1, 1))
+			"done":
+				button.add_theme_color_override("font_color", Color(0.4, 0.8, 0.45, 1))
+			"error":
+				button.add_theme_color_override("font_color", Color(1, 0.45, 0.4, 1))
+			_:
+				button.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 1))
+
+# --- Action bar ---
+
+func _refresh_action_bar() -> void:
+	_stage_button.text = STEP_ACTIONS[_current_step]
+	_stage_button.disabled = _busy or (_current_step == 4 and not FileAccess.file_exists(directory.path_join("ir").path_join("story.json")))
+	_prompt_row.visible = (_current_step == 2)
+
+func _on_stage_action() -> void:
+	if _current_step >= 4:
+		apply_current_ir()
+		return
+	_start_stage(STEP_STAGES[_current_step])
