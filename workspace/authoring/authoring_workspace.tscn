@@ -201,23 +201,23 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="Open" type="Button" parent="Content/ActionBar/ActionRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-flat = true
 text = "Open"
 
 [node name="Init" type="Button" parent="Content/ActionBar/ActionRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-flat = true
 text = "Init"
 
 [node name="Save" type="Button" parent="Content/ActionBar/ActionRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-flat = true
 text = "Save"
 
 [node name="Validate" type="Button" parent="Content/ActionBar/ActionRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-flat = true
 text = "Validate"
 
 [node name="Spacer" type="Control" parent="Content/ActionBar/ActionRow"]
@@ -225,6 +225,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="StageButton" type="Button" parent="Content/ActionBar/ActionRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "▶ Generate Scenes"
 
