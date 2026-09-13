@@ -1,0 +1,133 @@
+extends HSplitContainer
+
+const BRIDGE := preload("res://node_map/integration/agent_cli_bridge.gd")
+
+signal status_changed(message: String)
+
+var directory := ""
+var current_file := ""
+var _dirty := false
+var _bridge = BRIDGE.new()
+
+@onready var _files: ItemList = $Files
+@onready var _editor: TextEdit = $Main/Editor
+@onready var _status: Label = $Main/Status
+@onready var _dir_dialog: FileDialog = $DirectoryDialog
+
+func _ready() -> void:
+	$Main/Toolbar/Open.pressed.connect(_open_dialog)
+	$Main/Toolbar/Init.pressed.connect(_init_directory)
+	$Main/Toolbar/Save.pressed.connect(save_current)
+	$Main/Toolbar/Validate.pressed.connect(_validate_directory)
+	_files.item_selected.connect(_on_file_selected)
+	_editor.text_changed.connect(func(): _dirty = true)
+	_dir_dialog.dir_selected.connect(set_directory)
+	_set_status("Open or init an authoring directory.")
+
+func authoring_dir_for_project(project_path: String) -> String:
+	if project_path.strip_edges().is_empty():
+		return ProjectSettings.globalize_path("user://untitled.authoring")
+	return project_path.get_basename() + ".authoring"
+
+func set_directory(path: String) -> void:
+	directory = path.simplify_path()
+	current_file = ""
+	_dirty = false
+	refresh_files()
+	if _files.item_count > 0:
+		_files.select(0)
+		_on_file_selected(0)
+	_set_status("Opened " + directory)
+
+func list_relative_files() -> PackedStringArray:
+	var found: PackedStringArray = PackedStringArray()
+	if directory.is_empty() or not DirAccess.dir_exists_absolute(directory):
+		return found
+	_collect_files(directory, "", found)
+	found.sort()
+	return found
+
+func refresh_files() -> void:
+	_files.clear()
+	for relative in list_relative_files():
+		_files.add_item(relative)
+
+func load_relative(relative: String) -> String:
+	var path := directory.path_join(relative)
+	var file := FileAccess.open(path, FileAccess.READ)
+	return file.get_as_text() if file != null else ""
+
+func save_relative(relative: String, text: String) -> bool:
+	var path := directory.path_join(relative)
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(text)
+	return true
+
+func save_current() -> void:
+	if directory.is_empty() or current_file.is_empty():
+		_set_status("No file selected.")
+		return
+	if save_relative(current_file, _editor.text):
+		_dirty = false
+		_set_status("Saved " + current_file)
+	else:
+		_set_status("Could not save " + current_file)
+
+func _open_dialog() -> void:
+	_dir_dialog.popup_centered_ratio(0.5)
+
+func _init_directory() -> void:
+	if directory.is_empty():
+		_open_dialog()
+		return
+	var result: Dictionary = _bridge.init_directory(directory)
+	_show_bridge(result, "Initialized " + directory)
+	if result.ok:
+		set_directory(directory)
+
+func _validate_directory() -> void:
+	if directory.is_empty():
+		_set_status("No authoring directory.")
+		return
+	save_current()
+	_show_bridge(_bridge.validate_directory(directory), "Authoring files are valid.")
+
+func _on_file_selected(index: int) -> void:
+	if _dirty and not current_file.is_empty():
+		save_relative(current_file, _editor.text)
+	current_file = _files.get_item_text(index)
+	_editor.text = load_relative(current_file)
+	_dirty = false
+
+func _collect_files(root: String, prefix: String, found: PackedStringArray) -> void:
+	var access := DirAccess.open(root if prefix.is_empty() else root.path_join(prefix))
+	if access == null:
+		return
+	access.list_dir_begin()
+	var name := access.get_next()
+	while name != "":
+		if name.begins_with("."):
+			name = access.get_next()
+			continue
+		var relative := name if prefix.is_empty() else prefix.path_join(name)
+		if access.current_is_dir():
+			if name != "runtime-package":
+				_collect_files(root, relative, found)
+		elif name != "status.json":
+			found.append(relative)
+		name = access.get_next()
+	access.list_dir_end()
+
+func _show_bridge(result: Dictionary, success: String) -> void:
+	if result.ok:
+		_set_status(success)
+		return
+	var diagnostics: Array = result.get("diagnostics", [])
+	_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else "Authoring command failed")
+
+func _set_status(message: String) -> void:
+	_status.text = message
+	status_changed.emit(message)

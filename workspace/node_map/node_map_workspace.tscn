@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://workspace/node_map/node_map_workspace.gd" id="1"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/node_map_editor.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_node_map.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://workspace/authoring/authoring_workspace.tscn" id="4"]
 
 [node name="NodeMapWorkspace" type="TabContainer"]
 anchors_preset = 15
@@ -16,6 +17,10 @@ script = ExtResource("1")
 layout_mode = 2
 
 [node name="PlaceholderNodeMap" parent="." instance=ExtResource("3")]
+visible = false
+layout_mode = 2
+
+[node name="AuthoringWorkspace" parent="." instance=ExtResource("4")]
 visible = false
 layout_mode = 2
 

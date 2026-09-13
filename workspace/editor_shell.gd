@@ -108,6 +108,7 @@ func _format_history_operation(operation: String) -> String:
 		"clear_input": return "Clear input"
 		"set_parameter": return "Edit parameter"
 		"set_node_flags": return "Change node state"
+		"batch": return "Authoring batch"
 		_: return operation.capitalize()
 
 func _on_history_item_selected(index: int) -> void:

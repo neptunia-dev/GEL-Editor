@@ -17,14 +17,37 @@ func execute(command: Dictionary) -> Dictionary:
 	var result: Dictionary = document.execute(command)
 	diagnostics_changed.emit(result.get("diagnostics", []))
 	if result.get("ok", false):
-		var after: Dictionary = document.get_snapshot()
-		if before != after:
-			_undo.append({"before": before, "after": after, "command": command.duplicate(true)})
-			if _undo.size() > HISTORY_LIMIT:
-				_undo.pop_front()
-			_redo.clear()
-			history_changed.emit()
+		_record_history(before, document.get_snapshot(), command.duplicate(true))
 	return result
+
+## 一批命令共用一个撤销快照。失败时恢复批次开始前的文档。
+func execute_batch(commands: Array) -> Dictionary:
+	var before: Dictionary = document.get_snapshot()
+	var applied: Array = []
+	for command in commands:
+		if not command is Dictionary:
+			document.restore_snapshot(before)
+			var invalid := [{"code": "invalid_command", "message": "Batch command must be a dictionary.", "severity": "error", "graph_id": "", "node_id": "", "port_id": "", "link_id": ""}]
+			diagnostics_changed.emit(invalid)
+			return {"ok": false, "diagnostics": invalid}
+		var result: Dictionary = document.execute(command)
+		if not result.get("ok", false):
+			document.restore_snapshot(before)
+			diagnostics_changed.emit(result.get("diagnostics", []))
+			return result
+		applied.append(result)
+	_record_history(before, document.get_snapshot(), {"op": "batch"})
+	diagnostics_changed.emit([])
+	return {"ok": true, "diagnostics": [], "results": applied}
+
+func _record_history(before: Dictionary, after: Dictionary, command: Dictionary) -> void:
+	if before == after:
+		return
+	_undo.append({"before": before, "after": after, "command": command})
+	if _undo.size() > HISTORY_LIMIT:
+		_undo.pop_front()
+	_redo.clear()
+	history_changed.emit()
 
 func can_undo() -> bool:
 	return not _undo.is_empty()
