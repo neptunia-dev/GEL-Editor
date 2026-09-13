@@ -23,6 +23,7 @@ func _ready() -> void:
 	$Main/Toolbar/Save.pressed.connect(save_current)
 	$Main/Toolbar/Validate.pressed.connect(_validate_directory)
 	$Main/Toolbar/Scenes.pressed.connect(func(): _start_stage("scenes"))
+	$Main/Toolbar/Scripts.pressed.connect(func(): _start_stage("scripts"))
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
@@ -130,6 +131,8 @@ func _on_poll() -> void:
 		var stage := str(status.get("stage", ""))
 		if stage == "scenes":
 			_set_status("Review scenes/*.md, then generate scripts.")
+		elif stage == "scripts":
+			_set_status("Review scripts/*.md, then run Review.")
 		else:
 			_set_status("Finished " + stage + ".")
 	else:
