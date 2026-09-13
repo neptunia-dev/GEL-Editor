@@ -37,7 +37,7 @@ func _ready() -> void:
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
 	_poll = Timer.new()
-	_poll.wait_time = 0.5
+	_poll.wait_time = 0.15
 	_poll.timeout.connect(_on_poll)
 	add_child(_poll)
 	_set_status("Open or init an authoring directory.")
@@ -126,6 +126,9 @@ func _start_stage(stage: String, extra: Array = []) -> void:
 	_pending_stage = stage
 	if stage == "ir":
 		_begin_ir_preview()
+	elif stage == "scenes" or stage == "scripts":
+		if get_parent() is TabContainer:
+			get_parent().current_tab = get_parent().get_tab_count() - 1
 	_set_status("Running " + stage + "...")
 	_poll.start()
 func _on_poll() -> void:
@@ -278,6 +281,12 @@ func _refresh_preview(relative: String) -> void:
 		_editor.text = text
 		current_file = relative
 		_dirty = false
+	var keep := current_file
+	refresh_files()
+	for index in _files.item_count:
+		if _files.get_item_text(index) == keep:
+			_files.select(index)
+			break
 
 func _consume_ir_stream() -> void:
 	if _stream_applier == null:
