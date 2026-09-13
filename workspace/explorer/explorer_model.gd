@@ -115,20 +115,20 @@ func get_entry_count() -> int:
 func matches_entry(entry_id: String, query: String) -> bool:
     if not _entries.has(entry_id):
         return false
-    return (_entries[entry_id] as EditorExplorerEntry).matches_query(query)
+    return _entries[entry_id].matches_query(query)
 
 func get_children(entry_id: String) -> Array:
     if not _children.has(entry_id):
         return []
     var result: Array = []
     for child_id in _children[entry_id]:
-        result.append((_entries[child_id] as EditorExplorerEntry).duplicate_entry())
+        result.append(_entries[child_id].duplicate_entry())
     return result
 
 func find(query: String) -> Array:
     var result: Array = []
     for entry_id in _entries:
-        var entry: EditorExplorerEntry = _entries[entry_id]
+        var entry = _entries[entry_id]
         if entry.matches_query(query):
             result.append(entry.duplicate_entry())
     result.sort_custom(Callable(self, "_compare_entries"))

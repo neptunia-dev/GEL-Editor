@@ -192,6 +192,12 @@ func _apply(command: Dictionary) -> Dictionary:
 				if moved == null or moved.locked:
 					return _command_error({"node_id": node_id}, "invalid_move", "节点不存在或布局已锁定。")
 				moved.position = command.positions[node_id]
+		"resize_nodes":
+			for node_id in command.sizes:
+				var resized = _node(node_id)
+				if resized == null or resized.locked or not command.sizes[node_id].is_finite() or command.sizes[node_id].x <= 0 or command.sizes[node_id].y <= 0:
+					return _command_error({"node_id": node_id}, "invalid_size", "节点不存在、布局已锁定或尺寸无效。")
+				resized.size = command.sizes[node_id]
 		"set_node_flags":
 			for field in command.values:
 				node.set(field, command.values[field])
@@ -511,7 +517,7 @@ func _validate_command(command: Dictionary) -> Array:
 		"set_input": {"node_id": TYPE_STRING, "port_id": TYPE_STRING, "value": -1},
 		"clear_input": {"node_id": TYPE_STRING, "port_id": TYPE_STRING},
 		"set_parameter": {"node_id": TYPE_STRING, "parameter_id": TYPE_STRING, "value": -1},
-		"move_nodes": {"positions": TYPE_DICTIONARY},
+		"move_nodes": {"positions": TYPE_DICTIONARY}, "resize_nodes": {"sizes": TYPE_DICTIONARY},
 		"remove_nodes": {"node_ids": TYPE_ARRAY}, "duplicate_nodes": {"node_ids": TYPE_ARRAY},
 		"connect": {"graph_id": TYPE_STRING, "source_node_id": TYPE_STRING, "source_port_id": TYPE_STRING, "target_node_id": TYPE_STRING, "target_port_id": TYPE_STRING},
 		"disconnect": {"link_id": TYPE_STRING},
@@ -541,6 +547,10 @@ func _validate_command(command: Dictionary) -> Array:
 	if command.has("positions"):
 		for node_id in command.positions:
 			if not node_id is String or not command.positions[node_id] is Vector2 or not command.positions[node_id].is_finite():
+				return invalid
+	if command.has("sizes"):
+		for node_id in command.sizes:
+			if not node_id is String or not command.sizes[node_id] is Vector2 or not command.sizes[node_id].is_finite() or command.sizes[node_id].x <= 0 or command.sizes[node_id].y <= 0:
 				return invalid
 	for key in ["node_ids", "item_ids"]:
 		if command.has(key):

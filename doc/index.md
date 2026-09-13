@@ -12,6 +12,7 @@
 - [Node Map 工程文件](node-map-project-file.md)：已实现的 `.gelproj` v1 容器、保存/加载、项目配置与 Runtime Package 的边界。
 - [SceneNode 设计](scene-node-design.md)：作为复合节点的 SceneNode 字段、子图接口、复制、删除和校验契约。
 - [Node Map 显示占位](node-map-preview.md)：当前 GraphEdit 演示场景、预览交互、运行方式与限制。
+- [修改事项](modification-items.md)：已发现但尚未完成修复的问题、定位记录和后续验证事项。
 
 ## 当前实现阶段
 

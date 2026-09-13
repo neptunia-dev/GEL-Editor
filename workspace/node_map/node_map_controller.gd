@@ -19,7 +19,7 @@ func execute(command: Dictionary) -> Dictionary:
 	if result.get("ok", false):
 		var after: Dictionary = document.get_snapshot()
 		if before != after:
-			_undo.append({"before": before, "after": after})
+			_undo.append({"before": before, "after": after, "command": command.duplicate(true)})
 			if _undo.size() > HISTORY_LIMIT:
 				_undo.pop_front()
 			_redo.clear()
@@ -31,6 +31,29 @@ func can_undo() -> bool:
 
 func can_redo() -> bool:
 	return not _redo.is_empty()
+
+func get_history() -> Array:
+	var result: Array = []
+	for entry in _undo:
+		result.append(_history_item(entry, true))
+	var future := _redo.duplicate()
+	future.reverse()
+	for entry in future:
+		result.append(_history_item(entry, false))
+	return result
+
+func get_history_cursor() -> int:
+	return _undo.size()
+
+func jump_to_history(index: int) -> bool:
+	var target := clampi(index, 0, _undo.size() + _redo.size())
+	while _undo.size() > target:
+		if not undo():
+			return false
+	while _undo.size() < target:
+		if not redo():
+			return false
+	return true
 
 func undo() -> bool:
 	return _restore(_undo, _redo, "before")
@@ -55,3 +78,10 @@ func _restore(source: Array[Dictionary], target: Array[Dictionary], key: String)
 	target.append(entry)
 	history_changed.emit()
 	return true
+
+func _history_item(entry: Dictionary, applied: bool) -> Dictionary:
+	var command: Dictionary = entry.get("command", {})
+	return {
+		"operation": str(command.get("op", "edit")),
+		"applied": applied,
+	}

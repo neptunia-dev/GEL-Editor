@@ -27,8 +27,11 @@ const UNSAVED_ACTION_DISCARD := "discard_changes"
 @onready var _left_region: Control = $EditorRoot/DockHSplitMain/DockVSplitLeft
 @onready var _right_region: Control = $EditorRoot/DockHSplitMain/DockVSplitRight
 @onready var _node_map_editor = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/NodeMapWorkspace/NodeMapEditor
+@onready var _explorer_panel = $EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer
 @onready var _document_tab: Button = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow/Untitled
 @onready var _document_state: Label = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow/DocumentState
+@onready var _history_list: ItemList = $EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent/Status
+@onready var _inspector = $EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector
 
 var _docks_visible := true
 var _bottom_expanded := false
@@ -51,11 +54,67 @@ func _ready() -> void:
 	_bottom_panel.tab_changed.connect(_on_bottom_tab_changed)
 	_node_map_editor.project_state_changed.connect(_on_project_state_changed)
 	_node_map_editor.project_save_as_requested.connect(_open_save_project_dialog)
+	_node_map_editor.graph.selection_changed.connect(_on_node_map_selection_changed)
+	_explorer_panel.entry_activated.connect(_on_explorer_entry_activated)
+	_explorer_panel.set_document(_node_map_editor.document)
+	_inspector.configure(_node_map_editor.document, _node_map_editor.controller, _node_map_editor.registry)
+	_inspector.scene_requested.connect(_node_map_editor.show_graph)
+	_node_map_editor.document.changed.connect(func(_change): _inspector.refresh())
+	add_to_group("node_map_navigation")
+	_node_map_editor.controller.history_changed.connect(_refresh_history)
+	_history_list.item_selected.connect(_on_history_item_selected)
 
 	_center_split.set_dragger_visibility(SplitContainer.DRAGGER_VISIBLE)
 	_set_bottom_expanded(false)
 	_set_docks_visible(true)
 	_on_project_state_changed(_node_map_editor.get_project_path(), _node_map_editor.is_project_dirty())
+	_refresh_history()
+
+func _on_node_map_selection_changed() -> void:
+	var selected: Array = _node_map_editor.graph.get_selected_ids()
+	_inspector.show_node(str(selected[0]) if not selected.is_empty() else "")
+
+func _on_explorer_entry_activated(entry_id: String) -> void:
+	var model = _explorer_panel.get_model()
+	if model == null:
+		return
+	var entry = model.get_entry(entry_id)
+	if entry == null or not entry.metadata.has("graph_id"):
+		return
+	_node_map_editor.show_graph(str(entry.metadata.graph_id))
+
+func _refresh_history() -> void:
+	_history_list.clear()
+	var history: Array = _node_map_editor.controller.get_history()
+	var cursor: int = _node_map_editor.controller.get_history_cursor()
+	for index in history.size():
+		var item: Dictionary = history[index]
+		var marker := "" if index < cursor else "[redo] "
+		_history_list.add_item("%d  %s%s" % [index + 1, marker, _format_history_operation(str(item.operation))])
+		_history_list.set_item_metadata(index, index)
+	if history.is_empty():
+		_history_list.add_item("No recent edits")
+		_history_list.set_item_disabled(0, true)
+
+func _format_history_operation(operation: String) -> String:
+	match operation:
+		"create_node": return "Add node"
+		"remove_nodes": return "Delete node"
+		"duplicate_nodes": return "Duplicate node"
+		"move_nodes": return "Move node"
+		"connect": return "Connect nodes"
+		"disconnect": return "Disconnect nodes"
+		"set_input": return "Edit input"
+		"clear_input": return "Clear input"
+		"set_parameter": return "Edit parameter"
+		"set_node_flags": return "Change node state"
+		_: return operation.capitalize()
+
+func _on_history_item_selected(index: int) -> void:
+	if _history_list.is_item_disabled(index):
+		return
+	var target: int = int(_history_list.get_item_metadata(index)) + 1
+	_node_map_editor.controller.jump_to_history(target)
 
 func _configure_menus() -> void:
 	var main_popup: PopupMenu = $EditorRoot/EditorTitleBar/TitleBarRow/MainMenu.get_popup()

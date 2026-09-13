@@ -44,30 +44,31 @@ func _test_static_scene_structure() -> void:
 
 func _test_placeholder_tree() -> void:
     var model = _panel.get_model()
-    _check(model != null, "placeholder adapter provides a model")
-    _check(model.get_root_id() == "project", "placeholder model has stable project root")
+    _check(model != null, "Node Map adapter provides a model")
+    _check(model.get_root_id() == "project", "Node Map adapter has a stable project root")
     var root = _tree.get_root()
     _check(root != null and root.get_text(0) == "Project", "Tree renders project root")
 
     var scenes = _child_named(root, "Scenes")
     _check(scenes != null, "Tree renders Scenes group")
-    var prologue = _child_named(scenes, "prologue")
-    _check(prologue != null, "Tree renders virtual scene folder")
-    _check(_child_named(prologue, "main.lua") != null, "Tree renders scene main.lua entry")
+    var prologue = _child_named(scenes, "Prologue")
+    _check(prologue != null, "Tree renders document Scene entry")
+    _check(_child_named(prologue, "main.lua") != null, "Tree renders Scene main.lua entry")
 
 func _test_filter_and_selection() -> void:
-    _tree.set_filter_query("scenes/ending")
+    _tree.set_filter_query("scenes/scene-")
     var filtered_root = _tree.get_root()
     var filtered_scenes = _child_named(filtered_root, "Scenes")
-    _check(filtered_scenes != null, "path filter keeps ancestor containers")
-    _check(_child_named(filtered_scenes, "ending") != null, "path filter finds matching demonstration entry parent")
-    _check(_child_named(filtered_scenes, "prologue") == null, "path filter hides unrelated demonstration entries")
+    _check(filtered_scenes != null, "document path filter keeps ancestor containers")
+    _check(_child_named(filtered_scenes, "Prologue") != null, "document path filter finds a Scene entry")
 
     _tree.set_filter_query("")
-    _check(_tree.select_entry("scene-script:prologue"), "Tree can select stable document entry")
-    _check(_tree.get_selected_entry_id() == "scene-script:prologue", "Tree exposes selected stable entry ID")
+    var prologue_entry = _child_named(_child_named(_tree.get_root(), "Scenes"), "Prologue")
+    var prologue_id := str(prologue_entry.get_metadata(0))
+    _check(_tree.select_entry(prologue_id), "Tree can select stable document entry")
+    _check(_tree.get_selected_entry_id() == prologue_id, "Tree exposes selected stable entry ID")
     _panel.get_node("ExplorerToolbar/Refresh").emit_signal("pressed")
-    _check(_tree.get_selected_entry_id() == "scene-script:prologue", "refresh preserves existing selection")
+    _check(_tree.get_selected_entry_id() == prologue_id, "refresh preserves existing selection")
 
 func _test_model_replacement() -> void:
     var old_model = _panel.get_model()
