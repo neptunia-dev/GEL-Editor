@@ -24,6 +24,7 @@ func _ready() -> void:
 	$Main/Toolbar/Validate.pressed.connect(_validate_directory)
 	$Main/Toolbar/Scenes.pressed.connect(func(): _start_stage("scenes"))
 	$Main/Toolbar/Scripts.pressed.connect(func(): _start_stage("scripts"))
+	$Main/Toolbar/Review.pressed.connect(func(): _start_stage("review"))
 	_files.item_selected.connect(_on_file_selected)
 	_editor.text_changed.connect(func(): _dirty = true)
 	_dir_dialog.dir_selected.connect(set_directory)
@@ -133,6 +134,8 @@ func _on_poll() -> void:
 			_set_status("Review scenes/*.md, then generate scripts.")
 		elif stage == "scripts":
 			_set_status("Review scripts/*.md, then run Review.")
+		elif stage == "review":
+			_set_status("Review finished. Generate IR when ready.")
 		else:
 			_set_status("Finished " + stage + ".")
 	else:

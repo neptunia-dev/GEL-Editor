@@ -50,6 +50,11 @@ layout_mode = 2
 tooltip_text = "Generate per-scene scripts after reviewing scene cards."
 text = "Scripts"
 
+[node name="Review" type="Button" parent="Main/Toolbar"]
+layout_mode = 2
+tooltip_text = "Review scripts for OOC and logic, then patch."
+text = "Review"
+
 [node name="Editor" type="TextEdit" parent="Main"]
 layout_mode = 2
 size_flags_vertical = 3
