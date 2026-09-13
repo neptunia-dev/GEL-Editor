@@ -482,6 +482,7 @@ func _refresh_step_bar() -> void:
 				button.add_theme_color_override("font_color", TEXT_MUTED)
 				button.add_theme_color_override("font_pressed_color", TEXT_MUTED)
 				button.add_theme_color_override("font_hover_color", TEXT_MUTED)
+		button.disabled = (_step_states[i] == "pending")
 
 # --- Action bar ---
 
