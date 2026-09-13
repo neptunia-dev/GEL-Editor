@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://workspace/node_map/widgets/value_widget.tscn" id="1"]
+[ext_resource type="Script" path="res://workspace/node_map/widgets/multiline_value_widget.gd" id="2"]
+
+[node name="MultilineValueWidget" instance=ExtResource("1")]
+script = ExtResource("2")
+
+[node name="Editor" type="TextEdit" parent="." index="1"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Unset"
+wrap_mode = 1
+scroll_fit_content_height = false
+scroll_fit_content_width = false

@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://workspace/node_map/node_map_node_view.gd" id="1"]
+[ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="2"]
+
+[node name="NodeMapNodeView" type="GraphNode"]
+custom_minimum_size = Vector2(270, 0)
+theme = ExtResource("2")
+title = "Node"
+script = ExtResource("1")

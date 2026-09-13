@@ -1,0 +1,69 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_graph.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_scene_node.tscn" id="2"]
+[ext_resource type="Script" path="res://workspace/node_map/placeholder_graph_node.gd" id="3"]
+
+[node name="RootGraph" instance=ExtResource("1")]
+connections = [{"from_node": &"Start", "from_port": 0, "to_node": &"Prologue", "to_port": 0, "keep_alive": false}, {"from_node": &"Prologue", "from_port": 0, "to_node": &"ChapterOne", "to_port": 0, "keep_alive": false}, {"from_node": &"Prologue", "from_port": 1, "to_node": &"Prologue", "to_port": 0, "keep_alive": false}, {"from_node": &"ChapterOne", "from_port": 0, "to_node": &"Ending", "to_port": 0, "keep_alive": false}]
+
+[node name="Start" type="GraphNode" parent="."]
+custom_minimum_size = Vector2(170, 0)
+position_offset = Vector2(40, 100)
+title = "Project Start"
+slot/1/right_enabled = true
+slot/1/right_type = 0
+slot/1/right_color = Color(0.72, 0.80, 0.83, 1)
+script = ExtResource("3")
+accent = Color(0.66, 0.76, 0.46, 1)
+
+[node name="Kind" type="Label" parent="Start"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.76, 0.46, 1)
+theme_override_font_sizes/font_size = 11
+text = "ENTRY POINT"
+
+[node name="Output" type="Label" parent="Start"]
+layout_mode = 2
+text = "start"
+horizontal_alignment = 2
+
+[node name="Prologue" parent="." instance=ExtResource("2")]
+position_offset = Vector2(290, 100)
+title = "Prologue"
+slot/4/right_enabled = true
+slot/4/right_type = 0
+slot/4/right_color = Color(0.72, 0.80, 0.83, 1)
+metadata/preview_target = "prologue"
+
+[node name="SceneId" parent="Prologue" index="1"]
+text = "prologue"
+
+[node name="Retry" type="Label" parent="Prologue"]
+layout_mode = 2
+text = "retry"
+horizontal_alignment = 2
+
+[node name="ChapterOne" parent="." instance=ExtResource("2")]
+position_offset = Vector2(630, 100)
+title = "Chapter One"
+metadata/preview_target = "chapter-one"
+
+[node name="SceneId" parent="ChapterOne" index="1"]
+text = "chapter-one"
+
+[node name="Ending" parent="." instance=ExtResource("2")]
+position_offset = Vector2(630, 410)
+title = "Ending"
+slot/2/right_enabled = false
+metadata/preview_target = "ending"
+
+[node name="SceneId" parent="Ending" index="1"]
+text = "ending"
+
+[node name="Output" parent="Ending/Flow" index="1"]
+text = ""
+
+[editable path="Prologue"]
+[editable path="ChapterOne"]
+[editable path="Ending"]
