@@ -25,6 +25,8 @@ func refresh() -> void:
 	_refresh()
 
 func show_node(node_id: String) -> void:
+	if _selected_node_id == node_id:
+		return
 	_selected_node_id = node_id
 	_refresh()
 
@@ -33,6 +35,8 @@ func _refresh() -> void:
 		return
 	for child in _content.get_children():
 		if child.name != "Heading" and child.name != "Rule":
+			# Remove layout participation before adding replacement controls.
+			_content.remove_child(child)
 			child.queue_free()
 	if _document == null or _selected_node_id.is_empty():
 		_add_label("Select a node to inspect", "Status")

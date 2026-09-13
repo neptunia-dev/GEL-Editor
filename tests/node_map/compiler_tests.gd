@@ -31,6 +31,8 @@ func _run() -> void:
 	_test_sample_if_compiles()
 	_test_missing_dialogue_text_is_rejected()
 	_test_invalid_options_are_rejected()
+	_test_variable_nodes()
+	_test_p0_expression_nodes()
 	if _failures == 0:
 		print("PASS: %d node map compiler checks" % _checks)
 		quit(0)
@@ -216,6 +218,85 @@ func _test_invalid_options_are_rejected() -> void:
 	_check(not invalid_scene_id.ok and invalid_scene_id.diagnostics.any(func(item): return item.code == "invalid_scene_id"), "compiler rejects editor-valid IDs that Runtime Package rejects")
 	var write_result: Dictionary = Writer.new().write({"ok": false}, "user://ignored")
 	_check(not write_result.ok and write_result.diagnostics[0].code == "invalid_compiled_package", "writer refuses failed compiler results")
+
+func _test_variable_nodes() -> void:
+	var fixture := _build_two_scene_story()
+	var document = fixture.document
+	var graph_id := _find_scene_node_id(document, "prologue")
+	graph_id = document.get_node(graph_id).child_graph_id
+	var entry = _find_node(document, graph_id, "gel.graph_input")
+	var output = _find_node(document, graph_id, "gel.graph_output")
+	_disconnect_all(document, graph_id)
+	var set_node := _create(document, "gel.set_variable", graph_id)
+	var number := _create(document, "gel.number", graph_id)
+	_ok(document, {"op": "set_parameter", "node_id": set_node, "parameter_id": "variable_key", "value": "score"})
+	_ok(document, {"op": "set_parameter", "node_id": number, "parameter_id": "value", "value": 3.0})
+	_connect(document, graph_id, entry.node_id, "out", set_node, "in")
+	_connect(document, graph_id, number, "value", set_node, "value")
+	_connect(document, graph_id, set_node, "next", output.node_id, "in")
+	var options := {"variables": [{"key": "score", "schema": {"type": "number"}, "defaultValue": 0}]}
+	var compiled: Dictionary = Compiler.new().compile(document, options)
+	_check(compiled.ok, "Set Variable compiles against a declared package variable: " + str(compiled.diagnostics))
+	if compiled.ok:
+		var script := str(compiled.scripts["scenes/prologue/main.lua"])
+		_check(compiled.manifest.variables.size() == 1 and "ctx.state:set(\"score\", 3" in script, "variable declaration and state write are emitted")
+	var unknown := Compiler.new().compile(document)
+	_check(not unknown.ok and unknown.diagnostics.any(func(item): return item.code == "unknown_variable"), "unknown variable keys are rejected")
+
+func _test_p0_expression_nodes() -> void:
+	var fixture := _build_two_scene_story()
+	var document = fixture.document
+	var scene_id := _find_scene_node_id(document, "prologue")
+	var graph_id: String = document.get_node(scene_id).child_graph_id
+	var entry = _find_node(document, graph_id, "gel.graph_input")
+	var output = _find_node(document, graph_id, "gel.graph_output")
+	_disconnect_all(document, graph_id)
+	var set_node := _create(document, "gel.set_variable", graph_id)
+	var math := _create(document, "gel.math", graph_id)
+	var left_number := _create(document, "gel.number", graph_id)
+	var right_number := _create(document, "gel.number", graph_id)
+	var get_node := _create(document, "gel.get_variable", graph_id)
+	var compare := _create(document, "gel.compare", graph_id)
+	var compare_right := _create(document, "gel.number", graph_id)
+	var logic := _create(document, "gel.logic", graph_id)
+	var boolean := _create(document, "gel.boolean", graph_id)
+	var branch := _create(document, "gel.if", graph_id)
+	var end_story := _create(document, "gel.end_story", graph_id)
+	for item in [[left_number, "value", 2.0], [right_number, "value", 3.0], [compare_right, "value", 4.0]]:
+		_ok(document, {"op": "set_parameter", "node_id": item[0], "parameter_id": item[1], "value": item[2]})
+	_ok(document, {"op": "set_parameter", "node_id": set_node, "parameter_id": "variable_key", "value": "score"})
+	_ok(document, {"op": "set_parameter", "node_id": get_node, "parameter_id": "variable_key", "value": "score"})
+	_ok(document, {"op": "set_parameter", "node_id": math, "parameter_id": "operation", "value": "add"})
+	_ok(document, {"op": "set_parameter", "node_id": compare, "parameter_id": "operation", "value": "greater_than"})
+	_ok(document, {"op": "set_parameter", "node_id": logic, "parameter_id": "operation", "value": "and"})
+	_connect(document, graph_id, entry.node_id, "out", set_node, "in")
+	_connect(document, graph_id, math, "value", set_node, "value")
+	_connect(document, graph_id, left_number, "value", math, "left")
+	_connect(document, graph_id, right_number, "value", math, "right")
+	_connect(document, graph_id, set_node, "next", branch, "in")
+	_connect(document, graph_id, get_node, "value", compare, "left")
+	_connect(document, graph_id, compare_right, "value", compare, "right")
+	_connect(document, graph_id, compare, "value", logic, "left")
+	_connect(document, graph_id, boolean, "value", logic, "right")
+	_connect(document, graph_id, logic, "value", branch, "condition")
+	_connect(document, graph_id, branch, "true", output.node_id, "in")
+	_connect(document, graph_id, branch, "false", end_story, "in")
+	var compiled: Dictionary = Compiler.new().compile(document, {"variables": [{"key": "score", "schema": {"type": "number"}, "defaultValue": 0}]})
+	_check(compiled.ok, "P0 variable, compare, logic and math graph compiles: " + str(compiled.diagnostics))
+	if compiled.ok:
+		var script := str(compiled.scripts["scenes/prologue/main.lua"])
+		_check("ctx.state:set(\"score\", (2" in script, "Set Variable emits state:set with Math expression")
+		_check("ctx.state:get(\"score\")" in script and " > 4" in script and " and false" in script, "Get Variable, Compare and Logic emit typed Lua expressions")
+	var bad_math: Variant = document.get_node(math)
+	bad_math.operation = "divide"
+	var zero := _create(document, "gel.number", graph_id)
+	_ok(document, {"op": "set_parameter", "node_id": zero, "parameter_id": "value", "value": 0.0})
+	for link in document.get_links(graph_id):
+		if link.target_node_id == math and link.target_port_id == "right":
+			_ok(document, {"op": "disconnect", "link_id": link.link_id})
+	_connect(document, graph_id, zero, "value", math, "right")
+	var rejected: Dictionary = Compiler.new().compile(document, {"variables": [{"key": "score", "schema": {"type": "number"}, "defaultValue": 0}]})
+	_check(not rejected.ok and rejected.diagnostics.any(func(item): return item.code == "division_by_zero"), "Math division by zero is rejected")
 
 func _find_scene_node_id(document, scene_id: String) -> String:
 	for node in document.get_nodes(document.root_graph_id):

@@ -459,17 +459,25 @@ func _populate_types() -> void:
 	var current = document.get_graph(graph.graph_id)
 	if current == null:
 		return
-	for definition in registry.list_definitions(current.kind):
+	var query := _search.text.strip_edges().to_lower()
+	var definitions: Array = registry.list_definitions(current.kind)
+	definitions.sort_custom(func(a, b):
+		if a.category == b.category:
+			return a.display_name.naturalnocasecmp_to(b.display_name) < 0
+		return a.category.naturalnocasecmp_to(b.category) < 0
+	)
+	for definition in definitions:
 		if definition.type_id in ["gel.project_start", "gel.graph_input"]:
 			continue
-		var caption: String = "%s / %s" % [definition.category, definition.display_name]
-		if not _search.text.is_empty() and not (_search.text.to_lower() in (caption + definition.type_id).to_lower()):
+		var caption: String = "%s  /  %s" % [definition.category, definition.display_name]
+		if not query.is_empty() and not (query in (caption + " " + definition.type_id).to_lower()):
 			continue
 		var index := _types.add_item(caption)
 		_types.set_item_metadata(index, definition.type_id)
 		_types.set_item_tooltip(index, definition.type_id)
 	if _types.item_count > 0:
 		_types.select(0)
+		_types.ensure_current_is_visible()
 	$NodePicker/Contents/Add.disabled = _types.item_count == 0
 
 func _add_selected_type() -> void:
@@ -479,6 +487,7 @@ func _add_selected_type() -> void:
 	var type_id: String = _types.get_item_metadata(indices[0])
 	_picker.hide()
 	add_node_type(type_id, _add_position)
+	_search.clear()
 
 func add_node_type(type_id: String, at: Vector2) -> Dictionary:
 	var result: Dictionary = controller.execute({"op": "create_node", "type_id": type_id, "graph_id": graph.graph_id, "position": at})

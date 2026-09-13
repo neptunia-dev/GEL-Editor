@@ -17,7 +17,28 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	_back.pressed.connect(show_graph.bind("root"))
-	$Toolbar/Row/FrameAll.pressed.connect(_frame_active)
+	var reset_button: Button = $Toolbar/Row/Reset
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color("10171d")
+	normal.set_border_width_all(1)
+	normal.border_color = Color(0.353, 0.776, 0.737, 0.75)
+	normal.set_corner_radius_all(4)
+	normal.content_margin_left = 10
+	normal.content_margin_right = 10
+	normal.content_margin_top = 5
+	normal.content_margin_bottom = 5
+	normal.shadow_color = Color(0.353, 0.776, 0.737, 0.12)
+	normal.shadow_size = 2
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("1b424c")
+	hover.border_color = Color(0.45, 0.95, 0.87, 1)
+	hover.shadow_color = Color(0.353, 0.776, 0.737, 0.24)
+	hover.shadow_size = 3
+	reset_button.add_theme_stylebox_override("normal", normal)
+	reset_button.add_theme_stylebox_override("hover", hover)
+	reset_button.add_theme_stylebox_override("pressed", hover)
+	reset_button.add_theme_color_override("font_color", Color("d4f0eb"))
+	reset_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	$Toolbar/Row/Reset.pressed.connect(_reset_active)
 	visibility_changed.connect(_on_visibility_changed)
 	for key in GRAPH_NAMES:

@@ -7,9 +7,9 @@ class_name EditorPlaceholderCanvas
 ## 这个控件只绘制网格和中心参考线，用来观察中央 Workspace 的边界和伸缩行为。
 ## 它不代表 Node Map，也不包含任何领域对象或编辑操作。
 
-var line_color: Color = Color("#26343d")
-var major_line_color: Color = Color("#31434d")
-var center_line_color: Color = Color("#4e6874")
+var line_color: Color = Color("#1d2a33")
+var major_line_color: Color = Color("#2b3d47")
+var center_line_color: Color = Color("#486675")
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -20,7 +20,7 @@ func _notification(what: int) -> void:
         queue_redraw()
 
 func _draw() -> void:
-    draw_rect(Rect2(Vector2.ZERO, size), Color("#10171c"))
+    draw_rect(Rect2(Vector2.ZERO, size), Color("#0b1116"))
     var grid_step := 32.0
     var major_step := grid_step * 4.0
     var x := 0.0

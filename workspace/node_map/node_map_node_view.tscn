@@ -3,8 +3,78 @@
 [ext_resource type="Script" path="res://workspace/node_map/node_map_node_view.gd" id="1"]
 [ext_resource type="Theme" path="res://workspace/node_map/placeholder_graph_theme.tres" id="2"]
 
+[sub_resource type="StyleBoxFlat" id="NodePanel"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.055, 0.11, 0.13, 1)
+border_width_left = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.16, 0.34, 0.35, 1)
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="NodeTitle"]
+content_margin_left = 12.0
+content_margin_top = 7.0
+content_margin_right = 12.0
+content_margin_bottom = 7.0
+bg_color = Color(0.07, 0.20, 0.21, 1)
+border_width_top = 2
+border_color = Color(0.35, 0.78, 0.74, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+
+[sub_resource type="StyleBoxFlat" id="NodeSelected"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.07, 0.16, 0.17, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.95, 0.87, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+shadow_color = Color(0.2, 0.8, 0.72, 0.18)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="NodeSelectedTitle"]
+content_margin_left = 12.0
+content_margin_top = 7.0
+content_margin_right = 12.0
+content_margin_bottom = 7.0
+bg_color = Color(0.10, 0.29, 0.29, 1)
+border_width_top = 2
+border_color = Color(0.65, 1, 0.94, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+
+[sub_resource type="Theme" id="NodeTheme"]
+default_font_size = 13
+GraphNode/styles/panel = SubResource("NodePanel")
+GraphNode/styles/panel_selected = SubResource("NodeSelected")
+GraphNode/styles/titlebar = SubResource("NodeTitle")
+GraphNode/styles/titlebar_selected = SubResource("NodeSelectedTitle")
+Label/colors/font_color = Color(0.82, 0.92, 0.91, 1)
+Button/colors/font_color = Color(0.82, 0.95, 0.92, 1)
+Button/colors/font_hover_color = Color(0.96, 1, 0.98, 1)
+
 [node name="NodeMapNodeView" type="GraphNode"]
 custom_minimum_size = Vector2(270, 0)
 theme = ExtResource("2")
+theme_override_constants/separation = 5
+theme_override_colors/title_color = Color(0.92, 1, 0.97, 1)
+theme_override_font_sizes/title_font_size = 14
+theme_override_styles/panel = SubResource("NodePanel")
+theme_override_styles/panel_selected = SubResource("NodeSelected")
+theme_override_styles/titlebar = SubResource("NodeTitle")
+theme_override_styles/titlebar_selected = SubResource("NodeSelectedTitle")
 title = "Node"
 script = ExtResource("1")

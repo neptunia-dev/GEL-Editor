@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_prologue_graph.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_chapter_graph.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_ending_graph.tscn" id="6"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/rotate-ccw.svg" id="7_reset"]
 
 [node name="PlaceholderNodeMap" type="VBoxContainer"]
 anchors_preset = 15
@@ -41,17 +42,14 @@ size_flags_horizontal = 3
 text = "Root Graph"
 text_overrun_behavior = 3
 
-[node name="FrameAll" type="Button" parent="Toolbar/Row"]
-custom_minimum_size = Vector2(32, 28)
-layout_mode = 2
-tooltip_text = "Frame all nodes"
-text = "Frame"
-
 [node name="Reset" type="Button" parent="Toolbar/Row"]
-custom_minimum_size = Vector2(32, 28)
+custom_minimum_size = Vector2(82, 32)
 layout_mode = 2
 tooltip_text = "Reset current preview"
 text = "Reset"
+icon = ExtResource("7_reset")
+theme_override_constants/icon_max_width = 16
+theme_override_constants/h_separation = 6
 
 [node name="GraphStack" type="MarginContainer" parent="."]
 custom_minimum_size = Vector2(0, 240)

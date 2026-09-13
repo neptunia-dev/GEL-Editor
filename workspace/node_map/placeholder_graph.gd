@@ -17,6 +17,7 @@ func _ready() -> void:
 		return
 	_initial_connections = get_connection_list().duplicate(true)
 	for node in get_graph_nodes():
+		node.draggable = false
 		_initial_positions[node.name] = node.position_offset
 		if node.has_node("OpenScene"):
 			var target := StringName(node.get_meta("preview_target", ""))

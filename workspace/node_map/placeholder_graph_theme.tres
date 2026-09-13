@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3]
 
+[ext_resource type="Font" path="res://workspace/editor_font.tres" id="1"]
+
 [sub_resource type="StyleBoxFlat" id="Canvas"]
 bg_color = Color(0.09, 0.094, 0.10, 1)
 
@@ -50,13 +52,14 @@ corner_radius_bottom_left = 3
 corner_radius_bottom_right = 3
 
 [resource]
+default_font = ExtResource("1")
 default_font_size = 13
 Button/styles/normal = SubResource("Button")
 Button/styles/hover = SubResource("Hover")
 Button/styles/pressed = SubResource("Hover")
 Button/styles/disabled = SubResource("Button")
-GraphEdit/colors/grid_minor = Color(0.24, 0.25, 0.26, 0.6)
-GraphEdit/colors/grid_major = Color(0.34, 0.35, 0.36, 0.65)
+GraphEdit/colors/grid_minor = Color(0.09, 0.20, 0.22, 0.55)
+GraphEdit/colors/grid_major = Color(0.16, 0.34, 0.35, 0.72)
 GraphEdit/styles/panel = SubResource("Canvas")
 GraphEdit/styles/menu_panel = SubResource("Button")
 GraphNode/constants/separation = 8
@@ -64,4 +67,4 @@ GraphNode/styles/panel = SubResource("Panel")
 GraphNode/styles/panel_selected = SubResource("Panel")
 GraphNode/styles/titlebar = SubResource("Title")
 GraphNode/styles/titlebar_selected = SubResource("Title")
-Label/colors/font_color = Color(0.87, 0.88, 0.89, 1)
+Label/colors/font_color = Color(0.81, 0.92, 0.90, 1)

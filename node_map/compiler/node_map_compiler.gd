@@ -20,8 +20,9 @@ const EXECUTABLE_NODE_TYPES := [
 	"gel.choice",
 	"gel.graph_output",
 	"gel.end_story",
+	"gel.set_variable",
 ]
-const DATA_ONLY_NODE_TYPES := ["gel.boolean"]
+const DATA_ONLY_NODE_TYPES := ["gel.boolean", "gel.number", "gel.get_variable", "gel.compare", "gel.logic", "gel.math"]
 
 ## 编译一个完整文档。
 ##
@@ -118,7 +119,7 @@ func compile(document, options: Dictionary = {}) -> Dictionary:
 					routes[scene_id] = {}
 				routes[scene_id][interface_id] = route_target
 
-		var script := _compile_scene_script(scene_graph, diagnostics)
+		var script := _compile_scene_script(scene_graph, config.variables, diagnostics)
 		if script.is_empty() and not _has_errors(diagnostics):
 			# 空脚本只可能来自内部逻辑错误；保留明确诊断而非写出非法包。
 			diagnostics.append(_error("empty_script", "Scene '" + scene_id + "' did not produce Lua source.", scene_graph_id, node_id))
@@ -151,14 +152,14 @@ func compile(document, options: Dictionary = {}) -> Dictionary:
 		"metadata": {"title": config.title},
 		"assets": [],
 		"characters": [],
-		"variables": [],
+		"variables": config.variables.duplicate(true),
 		"scenes": scene_definitions,
 		"routes": routes,
 	}
 	return {"ok": true, "diagnostics": diagnostics, "manifest": manifest, "scripts": scripts}
 
 func _normalize_options(options: Dictionary, diagnostics: Array) -> Dictionary:
-	var allowed := ["package_id", "package_version", "save_schema_version", "title", "engine_min_version", "entry_scene"]
+	var allowed := ["package_id", "package_version", "save_schema_version", "title", "engine_min_version", "entry_scene", "variables"]
 	for key in options:
 		if not key is String or not allowed.has(key):
 			diagnostics.append(_error("invalid_compile_option", "Unknown compiler option '" + str(key) + "'."))
@@ -168,6 +169,11 @@ func _normalize_options(options: Dictionary, diagnostics: Array) -> Dictionary:
 	var title_value: Variant = options.get("title", DEFAULT_TITLE)
 	var engine_min_version: Variant = options.get("engine_min_version", DEFAULT_ENGINE_MIN_VERSION)
 	var entry_scene: Variant = options.get("entry_scene", "")
+	var variables: Variant = options.get("variables", [])
+	if not variables is Array:
+		diagnostics.append(_error("invalid_compile_option", "variables must be an array."))
+	else:
+		_validate_variable_definitions(variables, diagnostics)
 	if not package_id is String or not _matches(package_id, "^[a-z][a-z0-9_.-]*$"):
 		diagnostics.append(_error("invalid_compile_option", "package_id must match ^[a-z][a-z0-9_.-]*$."))
 	if not package_version is String or not _matches(package_version, "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"):
@@ -187,7 +193,21 @@ func _normalize_options(options: Dictionary, diagnostics: Array) -> Dictionary:
 		"title": title_value if title_value is String else "",
 		"engine_min_version": engine_min_version if engine_min_version is String else "",
 		"entry_scene": entry_scene if entry_scene is String else "",
+		"variables": variables if variables is Array else [],
 	}
+
+func _validate_variable_definitions(variables: Array, diagnostics: Array) -> void:
+	var keys: Dictionary = {}
+	for definition in variables:
+		if not definition is Dictionary or not definition.has_all(["key", "schema", "defaultValue"]):
+			diagnostics.append(_error("invalid_variable_definition", "Variable definitions require key, schema, and defaultValue."))
+			continue
+		var key := str(definition.key)
+		if key.is_empty() or not _matches(key, "^[a-z][a-z0-9_.-]*$") or keys.has(key):
+			diagnostics.append(_error("invalid_variable_definition", "Variable keys must be unique and match ^[a-z][a-z0-9_.-]*$.", "", "", key))
+		keys[key] = true
+		if not definition.schema is Dictionary or not ["null", "boolean", "number", "string", "array", "object"].has(definition.schema.get("type", "")):
+			diagnostics.append(_error("invalid_variable_definition", "Variable schema type is invalid.", "", "", key))
 
 func _index_graphs(snapshot: Dictionary, diagnostics: Array) -> Dictionary:
 	var graphs: Dictionary = {}
@@ -248,7 +268,7 @@ func _required_next(graph: Dictionary, source: Dictionary, port_id: String, allo
 	var source_id := str(source.get("id", ""))
 	var links := _outgoing_links(graph, source_id, port_id)
 	if links.is_empty():
-		diagnostics.append(_error("missing_flow_link", "Flow output '" + port_id + "' must connect to exactly one target.", graph_id, source_id, port_id))
+		diagnostics.append(_error("missing_flow_link", "Flow output '" + port_id + "' must connect to exactly one target. links=" + str(graph.get("links", [])), graph_id, source_id, port_id))
 		return ""
 	if links.size() != 1:
 		diagnostics.append(_error("ambiguous_flow_link", "Flow output '" + port_id + "' has more than one target.", graph_id, source_id, port_id))
@@ -261,7 +281,7 @@ func _required_next(graph: Dictionary, source: Dictionary, port_id: String, allo
 		return ""
 	return target_id
 
-func _compile_scene_script(graph: Dictionary, diagnostics: Array) -> String:
+func _compile_scene_script(graph: Dictionary, variables: Array, diagnostics: Array) -> String:
 	var graph_id := str(graph.get("graphId", ""))
 	var nodes_by_id := _index_nodes(graph, diagnostics)
 	if _has_errors(diagnostics):
@@ -303,13 +323,17 @@ func _compile_scene_script(graph: Dictionary, diagnostics: Array) -> String:
 			"gel.dialogue":
 				cases.append_array(_compile_dialogue_case(graph, node, nodes_by_id, diagnostics))
 			"gel.if":
-				cases.append_array(_compile_if_case(graph, node, nodes_by_id, diagnostics))
+				cases.append_array(_compile_if_case(graph, node, nodes_by_id, variables, diagnostics))
 			"gel.choice":
 				cases.append_array(_compile_choice_case(graph, node, nodes_by_id, diagnostics))
 			"gel.graph_output":
 				cases.append_array(_compile_output_case(node, graph_id, diagnostics))
 			"gel.end_story":
 				cases.append_array(_compile_end_case(node))
+			"gel.set_variable":
+				cases.append_array(_compile_set_variable_case(graph, node, nodes_by_id, variables, diagnostics))
+			"gel.get_variable", "gel.compare", "gel.logic", "gel.math", "gel.number":
+				pass
 			"gel.boolean":
 				# Boolean is a compile-time data source for If.condition; it has no flow case.
 				pass
@@ -414,6 +438,7 @@ func _validate_terminating_flow(graph: Dictionary, reachable: Dictionary, termin
 func _flow_output_ids(node: Dictionary) -> Array:
 	match node.get("type", ""):
 		"gel.dialogue": return ["next"]
+		"gel.set_variable": return ["next"]
 		"gel.if": return ["true", "false"]
 		"gel.choice":
 			var ports: Array = []
@@ -445,14 +470,14 @@ func _compile_dialogue_case(graph: Dictionary, node: Dictionary, nodes_by_id: Di
 	lines.append("      node = " + _lua_string(next_id))
 	return lines
 
-func _compile_if_case(graph: Dictionary, node: Dictionary, nodes_by_id: Dictionary, diagnostics: Array) -> Array:
-	var condition_result := _resolve_input(graph, node, "condition", "boolean", false, nodes_by_id, diagnostics)
+func _compile_if_case(graph: Dictionary, node: Dictionary, nodes_by_id: Dictionary, variables: Array, diagnostics: Array) -> Array:
+	var condition_result := _resolve_expression(graph, node, "condition", nodes_by_id, variables, diagnostics)
 	var true_id := _required_scene_next(graph, node, "true", nodes_by_id, diagnostics)
 	var false_id := _required_scene_next(graph, node, "false", nodes_by_id, diagnostics)
 	if not bool(condition_result.get("ok", false)) or true_id.is_empty() or false_id.is_empty():
 		return []
 	var lines: Array = [_case_head(str(node.get("id", "")))]
-	lines.append("      if " + ("true" if bool(condition_result.value) else "false") + " then")
+	lines.append("      if " + condition_result.lua + " then")
 	lines.append("        node = " + _lua_string(true_id))
 	lines.append("      else")
 	lines.append("        node = " + _lua_string(false_id))
@@ -505,6 +530,135 @@ func _compile_output_case(node: Dictionary, graph_id: String, diagnostics: Array
 func _compile_end_case(node: Dictionary) -> Array:
 	return [_case_head(str(node.get("id", ""))), "      return ctx.flow:end_story()"]
 
+func _compile_set_variable_case(graph: Dictionary, node: Dictionary, nodes_by_id: Dictionary, variables: Array, diagnostics: Array) -> Array:
+	var graph_id := str(graph.get("graphId", ""))
+	var node_id := str(node.get("id", ""))
+	var key := str((node.get("data", {}) as Dictionary).get("variable_key", ""))
+	var definition := _variable_definition(variables, key)
+	if definition.is_empty():
+		diagnostics.append(_error("unknown_variable", "Variable '" + key + "' is not declared.", graph_id, node_id))
+		return []
+	var value_result := _resolve_expression(graph, node, "value", nodes_by_id, variables, diagnostics)
+	var next_id := _required_scene_next(graph, node, "next", nodes_by_id, diagnostics)
+	if not value_result.ok or next_id.is_empty():
+		return []
+	var value_type := str((definition.get("schema", {}) as Dictionary).get("type", ""))
+	var value_matches: bool = value_result.value_type == value_type
+	if value_type == "null":
+		value_matches = value_result.get("value", null) == null
+	if value_type == "array" or value_type == "object":
+		value_matches = value_result.value_type == value_type
+	if not value_matches:
+		diagnostics.append(_error("invalid_variable_value", "Set Variable value type does not match the declared variable schema.", graph_id, node_id, "value"))
+		return []
+	return [_case_head(node_id), "      ctx.state:set(" + _lua_string(key) + ", " + value_result.lua + ")", "      node = " + _lua_string(next_id)]
+
+func _resolve_expression(graph: Dictionary, node: Dictionary, port_id: String, nodes_by_id: Dictionary, variables: Array, diagnostics: Array) -> Dictionary:
+	var links := _incoming_links(graph, str(node.get("id", "")), port_id)
+	if links.size() != 1:
+		var inputs: Dictionary = node.get("inputs", {})
+		if not inputs.has(port_id):
+			diagnostics.append(_error("missing_required_input", "Node requires a data expression for '" + port_id + "'.", str(graph.get("graphId", "")), str(node.get("id", "")), port_id))
+			return {"ok": false}
+		var local_value: Variant = inputs[port_id]
+		return {"ok": true, "value": local_value, "value_type": _value_type(local_value), "lua": _lua_literal(local_value)}
+	var source: Dictionary = nodes_by_id.get(str(links[0].get("sourceNodeId", "")), {})
+	var source_port := str(links[0].get("sourcePortId", ""))
+	if source.is_empty():
+		diagnostics.append(_error("invalid_data_link", "Data source node does not exist.", str(graph.get("graphId", "")), str(node.get("id", "")), port_id))
+		return {"ok": false}
+	var source_type := str(source.get("type", ""))
+	if source_type == "gel.number" or source_type == "gel.boolean":
+		var value = (source.get("data", {}) as Dictionary).get("value", null)
+		if source_port != "value":
+			diagnostics.append(_error("invalid_data_link", "Constant only exposes its value port.", str(graph.get("graphId", "")), str(source.get("id", "")), source_port))
+			return {"ok": false}
+		return {"ok": true, "value": value, "value_type": "number" if source_type == "gel.number" else "boolean", "lua": _lua_literal(value)}
+	if source_type == "gel.get_variable":
+		var key := str((source.get("data", {}) as Dictionary).get("variable_key", ""))
+		var definition := _variable_definition(variables, key)
+		if definition.is_empty():
+			diagnostics.append(_error("unknown_variable", "Variable '" + key + "' is not declared.", str(graph.get("graphId", "")), str(source.get("id", ""))))
+			return {"ok": false}
+		if source_port != "value":
+			diagnostics.append(_error("invalid_data_link", "Get Variable only exposes its value port.", str(graph.get("graphId", "")), str(source.get("id", "")), source_port))
+			return {"ok": false}
+		return {"ok": true, "value_type": _schema_value_type(definition), "lua": "ctx.state:get(" + _lua_string(key) + ")"}
+	if source_type in ["gel.compare", "gel.logic", "gel.math"] and source_port == "value":
+		var operation := str((source.get("data", {}) as Dictionary).get("operation", ""))
+		var left := _resolve_expression(graph, source, "left", nodes_by_id, variables, diagnostics)
+		var right := {"ok": true}
+		if source_type != "gel.logic" or operation != "not":
+			right = _resolve_expression(graph, source, "right", nodes_by_id, variables, diagnostics)
+		if not left.ok or not right.ok:
+			return {"ok": false}
+		var expression := ""
+		if source_type == "gel.compare":
+			expression = {"equals": "==", "not_equals": "~=", "less_than": "<", "less_or_equal": "<=", "greater_than": ">", "greater_or_equal": ">="}.get(operation, "")
+			if expression.is_empty() or left.value_type != right.value_type or (operation not in ["equals", "not_equals"] and left.value_type not in ["number", "string"]):
+				diagnostics.append(_error("invalid_operation", "Compare operation or operand types are invalid.", str(graph.get("graphId", "")), str(source.get("id", ""))))
+				return {"ok": false}
+			return {"ok": true, "value_type": "boolean", "lua": "(" + left.lua + " " + expression + " " + right.lua + ")"}
+		if source_type == "gel.logic":
+			expression = {"and": "and", "or": "or"}.get(operation, "")
+			if operation == "not":
+				if left.value_type != "boolean":
+					diagnostics.append(_error("invalid_operation", "Logic NOT requires a boolean operand.", str(graph.get("graphId", "")), str(source.get("id", ""))))
+					return {"ok": false}
+				return {"ok": true, "value_type": "boolean", "lua": "(not " + left.lua + ")"}
+			if expression.is_empty() or left.value_type != "boolean" or right.value_type != "boolean":
+				diagnostics.append(_error("invalid_operation", "Logic operation requires boolean operands.", str(graph.get("graphId", "")), str(source.get("id", ""))))
+				return {"ok": false}
+			return {"ok": true, "value_type": "boolean", "lua": "(" + left.lua + " " + expression + " " + right.lua + ")"}
+		expression = {"add": "+", "subtract": "-", "multiply": "*", "divide": "/", "modulo": "%"}.get(operation, "")
+		if expression.is_empty() or left.value_type != "number" or right.value_type != "number":
+			diagnostics.append(_error("invalid_operation", "Math operation requires numeric operands.", str(graph.get("graphId", "")), str(source.get("id", ""))))
+			return {"ok": false}
+		if operation in ["divide", "modulo"] and right.has("value") and float(right.value) == 0.0:
+			diagnostics.append(_error("division_by_zero", "Math operation cannot divide or modulo by zero.", str(graph.get("graphId", "")), str(source.get("id", ""))))
+			return {"ok": false}
+		return {"ok": true, "value_type": "number", "lua": "(" + left.lua + " " + expression + " " + right.lua + ")"}
+	diagnostics.append(_error("unsupported_data_link", "Data expression source is not supported.", str(graph.get("graphId", "")), str(node.get("id", "")), port_id))
+	return {"ok": false}
+
+func _variable_definition(variables: Array, key: String) -> Dictionary:
+	for definition in variables:
+		if definition is Dictionary and str(definition.get("key", "")) == key:
+			return definition
+	return {}
+
+func _schema_value_type(definition: Dictionary) -> String:
+	var schema: Dictionary = definition.get("schema", {})
+	var schema_type := str(schema.get("type", "json"))
+	return "json" if schema_type == "null" else schema_type
+
+func _lua_literal(value: Variant) -> String:
+	if value is bool:
+		return "true" if value else "false"
+	if value is int or value is float:
+		return str(value)
+	if value is String:
+		return _lua_string(value)
+	if value is Array:
+		var items: Array = []
+		for item in value:
+			items.append("[" + str(items.size() + 1) + "] = " + _lua_literal(item))
+		return "{" + ", ".join(items) + "}"
+	if value is Dictionary:
+		var fields: Array = []
+		for key in value:
+			fields.append("[" + _lua_string(str(key)) + "] = " + _lua_literal(value[key]))
+		return "{" + ", ".join(fields) + "}"
+	return "nil"
+
+func _value_type(value: Variant) -> String:
+	if value is bool: return "boolean"
+	if value is int or value is float: return "number"
+	if value is String: return "string"
+	if value is Array: return "array"
+	if value is Dictionary: return "object"
+	return "json"
+
 func _required_scene_next(graph: Dictionary, source: Dictionary, port_id: String, nodes_by_id: Dictionary, diagnostics: Array) -> String:
 	var graph_id := str(graph.get("graphId", ""))
 	var source_id := str(source.get("id", ""))
@@ -519,7 +673,7 @@ func _required_scene_next(graph: Dictionary, source: Dictionary, port_id: String
 	var target_id := str(link.get("targetNodeId", ""))
 	var target: Dictionary = nodes_by_id.get(target_id, {})
 	if target.is_empty() or not EXECUTABLE_NODE_TYPES.has(target.get("type", "")):
-		diagnostics.append(_error("invalid_flow_target", "Flow output '" + port_id + "' must target an executable story node.", graph_id, source_id, port_id, str(link.get("linkId", ""))))
+		diagnostics.append(_error("invalid_flow_target", "Flow output '" + port_id + "' must target an executable story node.", graph_id, source_id, port_id))
 		return ""
 	return target_id
 

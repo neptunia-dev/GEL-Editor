@@ -11,6 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2")
+zoom_step = 1.1
 grid_pattern = 1
 snapping_distance = 20
 right_disconnects = true

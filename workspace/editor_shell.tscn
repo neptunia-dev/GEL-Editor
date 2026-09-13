@@ -5,13 +5,69 @@
 [ext_resource type="Script" path="res://workspace/explorer/explorer_tree.gd" id="3_explorer_tree"]
 [ext_resource type="Script" path="res://workspace/explorer/node_map_explorer_panel.gd" id="4_node_map_explorer_panel"]
 [ext_resource type="Script" path="res://workspace/inspector/editor_inspector.gd" id="5_editor_inspector"]
+[ext_resource type="Texture2D" path="res://workspace/node_map/icons/trash-2.svg" id="6_history_clear"]
+[ext_resource type="Theme" path="res://workspace/editor_theme.tres" id="7_theme"]
+
+[sub_resource type="StyleBoxFlat" id="WorkspaceHeader"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.063, 0.09, 0.114, 1)
+border_width_bottom = 1
+border_color = Color(0.353, 0.776, 0.737, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="WorkspaceStatus"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.105, 0.20, 0.22, 1)
+border_width_left = 2
+border_color = Color(0.353, 0.776, 0.737, 1)
+
+[sub_resource type="StyleBoxFlat" id="MenuNeonNormal"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.063, 0.09, 0.114, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.353, 0.776, 0.737, 0.75)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0.353, 0.776, 0.737, 0.12)
+shadow_size = 2
+
+[sub_resource type="StyleBoxFlat" id="MenuNeonHover"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.105, 0.259, 0.298, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.95, 0.87, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0.353, 0.776, 0.737, 0.24)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bar"]
 content_margin_left = 6.0
 content_margin_top = 3.0
 content_margin_right = 6.0
 content_margin_bottom = 3.0
-bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+bg_color = Color(0.047059, 0.070588, 0.090196, 1)
 border_width_bottom = 1
 border_color = Color(0.219608, 0.219608, 0.219608, 1)
 
@@ -20,7 +76,7 @@ content_margin_left = 8.0
 content_margin_top = 2.0
 content_margin_right = 8.0
 content_margin_bottom = 2.0
-bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+bg_color = Color(0.062745, 0.090196, 0.113725, 1)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
@@ -31,12 +87,12 @@ content_margin_left = 7.0
 content_margin_top = 1.0
 content_margin_right = 7.0
 content_margin_bottom = 1.0
-bg_color = Color(0.192157, 0.290196, 0.419608, 1)
+bg_color = Color(0.105882, 0.258824, 0.298039, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.341176, 0.588235, 0.901961, 1)
+border_color = Color(0.352941, 0.776471, 0.737255, 1)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
@@ -47,12 +103,12 @@ content_margin_left = 7.0
 content_margin_top = 1.0
 content_margin_right = 7.0
 content_margin_bottom = 1.0
-bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+bg_color = Color(0.101961, 0.145098, 0.176471, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.290196, 0.290196, 0.290196, 1)
+border_color = Color(0.196078, 0.352941, 0.388235, 1)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
@@ -63,77 +119,77 @@ content_margin_left = 9.0
 content_margin_top = 1.0
 content_margin_right = 9.0
 content_margin_bottom = 1.0
-bg_color = Color(0.192157, 0.290196, 0.419608, 1)
+bg_color = Color(0.105882, 0.258824, 0.298039, 1)
 border_width_bottom = 2
-border_color = Color(0.341176, 0.588235, 0.901961, 1)
+border_color = Color(0.352941, 0.776471, 0.737255, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_main_screen_hover"]
 content_margin_left = 9.0
 content_margin_top = 2.0
 content_margin_right = 9.0
 content_margin_bottom = 1.0
-bg_color = Color(0.188235, 0.188235, 0.188235, 1)
+bg_color = Color(0.101961, 0.145098, 0.176471, 1)
 border_width_bottom = 1
-border_color = Color(0.290196, 0.290196, 0.290196, 1)
+border_color = Color(0.196078, 0.352941, 0.388235, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_main_screen_normal"]
 content_margin_left = 9.0
 content_margin_top = 2.0
 content_margin_right = 9.0
 content_margin_bottom = 2.0
-bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+bg_color = Color(0.062745, 0.090196, 0.113725, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_split"]
-bg_color = Color(0.105882, 0.105882, 0.105882, 1)
+bg_color = Color(0.035294, 0.054902, 0.070588, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_panel"]
 content_margin_left = 4.0
 content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 4.0
-bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+bg_color = Color(0.047059, 0.070588, 0.090196, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.219608, 0.219608, 0.219608, 1)
+border_color = Color(0.12549, 0.223529, 0.247059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_bar"]
 content_margin_left = 4.0
 content_margin_top = 2.0
 content_margin_right = 4.0
 content_margin_bottom = 2.0
-bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+bg_color = Color(0.062745, 0.090196, 0.113725, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.219608, 0.219608, 0.219608, 1)
+border_color = Color(0.12549, 0.223529, 0.247059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_unselected"]
 content_margin_left = 8.0
 content_margin_top = 3.0
 content_margin_right = 8.0
 content_margin_bottom = 3.0
-bg_color = Color(0.141176, 0.141176, 0.141176, 1)
+bg_color = Color(0.062745, 0.090196, 0.113725, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_hovered"]
 content_margin_left = 8.0
 content_margin_top = 3.0
 content_margin_right = 8.0
 content_margin_bottom = 2.0
-bg_color = Color(0.188235, 0.188235, 0.188235, 1)
+bg_color = Color(0.101961, 0.145098, 0.176471, 1)
 border_width_bottom = 1
-border_color = Color(0.290196, 0.290196, 0.290196, 1)
+border_color = Color(0.196078, 0.352941, 0.388235, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_selected"]
 content_margin_left = 8.0
 content_margin_top = 3.0
 content_margin_right = 8.0
 content_margin_bottom = 2.0
-bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+bg_color = Color(0.078431, 0.176471, 0.188235, 1)
 border_width_bottom = 2
-border_color = Color(0.341176, 0.588235, 0.901961, 1)
+border_color = Color(0.352941, 0.776471, 0.737255, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toolbar"]
 content_margin_left = 8.0
@@ -149,26 +205,26 @@ content_margin_left = 10.0
 content_margin_top = 2.0
 content_margin_right = 10.0
 content_margin_bottom = 1.0
-bg_color = Color(0.168627, 0.168627, 0.168627, 1)
+bg_color = Color(0.078431, 0.176471, 0.188235, 1)
 border_width_bottom = 2
-border_color = Color(0.341176, 0.588235, 0.901961, 1)
+border_color = Color(0.352941, 0.776471, 0.737255, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_canvas"]
-bg_color = Color(0.105882, 0.105882, 0.105882, 1)
+bg_color = Color(0.035294, 0.054902, 0.070588, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.219608, 0.219608, 0.219608, 1)
+border_color = Color(0.12549, 0.223529, 0.247059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_panel"]
 content_margin_left = 4.0
 content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 4.0
-bg_color = Color(0.086275, 0.086275, 0.086275, 1)
+bg_color = Color(0.047059, 0.070588, 0.090196, 1)
 border_width_top = 1
-border_color = Color(0.290196, 0.290196, 0.290196, 1)
+border_color = Color(0.196078, 0.352941, 0.388235, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_tab_bar"]
 content_margin_left = 4.0
@@ -205,6 +261,7 @@ border_width_top = 2
 border_color = Color(0.341176, 0.588235, 0.901961, 1)
 
 [node name="EditorShell" type="Control" unique_id=1166560764]
+theme = ExtResource("7_theme")
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -248,9 +305,9 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+theme_override_styles/normal = SubResource("MenuNeonNormal")
+theme_override_styles/pressed = SubResource("MenuNeonHover")
+theme_override_styles/hover = SubResource("MenuNeonHover")
 text = "GEL"
 
 [node name="ProjectMenu" type="MenuButton" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1539367972]
@@ -261,9 +318,9 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 theme_override_colors/font_pressed_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+theme_override_styles/normal = SubResource("MenuNeonNormal")
+theme_override_styles/pressed = SubResource("MenuNeonHover")
+theme_override_styles/hover = SubResource("MenuNeonHover")
 text = "Project"
 
 [node name="EditMenu" type="MenuButton" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1603921324]
@@ -274,9 +331,9 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 theme_override_colors/font_pressed_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_colors/font_hover_color = Color(0.835294, 0.835294, 0.835294, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
+theme_override_styles/normal = SubResource("MenuNeonNormal")
+theme_override_styles/pressed = SubResource("MenuNeonHover")
+theme_override_styles/hover = SubResource("MenuNeonHover")
 text = "Edit"
 
 [node name="TitleBarLeftSpacer" type="Control" parent="EditorRoot/EditorTitleBar/TitleBarRow" unique_id=1533665421]
@@ -371,6 +428,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_menu_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_menu_hover")
 text = "Docks"
+toggle_mode = true
 
 [node name="DockHSplitMain" type="HSplitContainer" parent="EditorRoot" unique_id=2064026827]
 layout_mode = 2
@@ -509,7 +567,7 @@ vertical_alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
-focus_mode = 0
+focus_mode = 2
 placeholder_text = "Filter..."
 clear_button_enabled = true
 
@@ -598,9 +656,9 @@ size_flags_vertical = 3
 theme_override_constants/separation = 4
 
 [node name="WorkspaceToolbar" type="PanelContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace" unique_id=2041904326]
-custom_minimum_size = Vector2(0, 32)
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_toolbar")
+theme_override_styles/panel = SubResource("WorkspaceHeader")
 
 [node name="ToolbarRow" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar" unique_id=581419470]
 layout_mode = 2
@@ -619,7 +677,7 @@ layout_mode = 2
 [node name="Mode" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=1448158319]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 13
 text = "Canvas"
 vertical_alignment = 1
 
@@ -630,9 +688,10 @@ mouse_filter = 2
 
 [node name="PlaceholderTag" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=1967663701]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.843137, 0.65098, 0.364706, 1)
-theme_override_font_sizes/font_size = 10
-text = "PLACEHOLDER"
+theme_override_colors/font_color = Color(0.70, 0.94, 0.87, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("WorkspaceStatus")
+text = "Editable"
 vertical_alignment = 1
 
 [node name="ToggleBottomPanel" type="Button" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow" unique_id=230667544]
@@ -844,11 +903,30 @@ metadata/_tab_index = 0
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=517217836]
+[node name="Toolbar" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent"]
 layout_mode = 2
+
+[node name="Heading" type="Label" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent/Toolbar" unique_id=517217836]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_font_sizes/font_size = 12
 text = "History"
+
+[node name="Clear" type="Button" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent/Toolbar"]
+layout_mode = 2
+custom_minimum_size = Vector2(30, 30)
+tooltip_text = "Clear undo and redo history"
+mouse_default_cursor_shape = 2
+disabled = true
+icon = ExtResource("6_history_clear")
+icon_alignment = 1
+theme_override_constants/icon_max_width = 16
+
+[node name="ClearHistoryDialog" type="ConfirmationDialog" parent="."]
+title = "Clear History"
+dialog_text = "Clear all undo and redo history?\nYour document will not change. Previous edits can no longer be undone."
+ok_button_text = "Clear History"
 
 [node name="Rule" type="HSeparator" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=1034383091]
 layout_mode = 2
@@ -860,6 +938,7 @@ allow_reselect = true
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 
 [node name="HistoryFiller" type="Control" parent="EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent" unique_id=1827998680]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2

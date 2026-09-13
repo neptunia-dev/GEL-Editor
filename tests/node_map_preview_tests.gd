@@ -113,7 +113,7 @@ func _test_pointer_input() -> void:
 	root.push_input(motion)
 	_mouse_button(motion.position, false)
 	await _settle()
-	_check(node.position_offset.distance_to(initial_position) > 10, "pointer drag moves node")
+	_check(node.position_offset.is_equal_approx(initial_position), "pointer drag does not move static preview node")
 	graph.reset_preview()
 	await _settle()
 	var button: Button = node.get_node("OpenScene")
@@ -152,7 +152,7 @@ func _test_pointer_input() -> void:
 		_mouse_motion(title_position + Vector2(40, 40), Vector2(40, 40), MOUSE_BUTTON_MASK_LEFT)
 		_mouse_button(title_position + Vector2(40, 40), false)
 		await _settle()
-		_check(node.position_offset.distance_to(initial_position) > 10, "node can still be dragged after returning")
+		_check(node.position_offset.is_equal_approx(initial_position), "static preview node remains locked after returning")
 		var released_position := node.position_offset
 		_mouse_motion(title_position + Vector2(80, 60), Vector2(40, 20))
 		await _settle()

@@ -30,11 +30,16 @@ const UNSAVED_ACTION_DISCARD := "discard_changes"
 @onready var _explorer_panel = $EditorRoot/DockHSplitMain/DockVSplitLeft/LeftLower/Explorer
 @onready var _document_tab: Button = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow/Untitled
 @onready var _document_state: Label = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/DocumentTabs/DocumentTabRow/DocumentState
+@onready var _project_state: Label = $EditorRoot/EditorTitleBar/TitleBarRow/ProjectState
 @onready var _history_list: ItemList = $EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent/Status
+@onready var _clear_history_button: Button = $EditorRoot/DockHSplitMain/DockVSplitRight/RightLower/History/HistoryContent/Toolbar/Clear
+@onready var _clear_history_dialog: ConfirmationDialog = $ClearHistoryDialog
 @onready var _inspector = $EditorRoot/DockHSplitMain/DockVSplitRight/RightUpper/Inspector
 
 var _docks_visible := true
 var _bottom_expanded := false
+var _dock_tween: Tween
+var _bottom_tween: Tween
 var _project_dialog: FileDialog
 var _project_dialog_mode := FileDialog.FILE_MODE_OPEN_FILE
 var _unsaved_changes_dialog: ConfirmationDialog
@@ -45,6 +50,18 @@ var _pending_destructive_action := ""
 var _save_then_destructive_action := ""
 
 func _ready() -> void:
+	var workspace: TabContainer = _node_map_editor.get_parent()
+	workspace.tab_changed.connect(_update_workspace_header)
+	_update_workspace_header(workspace.current_tab)
+	var tool_theme: Theme = _node_map_editor.get_node("Toolbar").theme
+	_clear_history_button.theme = tool_theme
+	_clear_history_button.pressed.connect(func(): _clear_history_dialog.popup_centered())
+	_clear_history_dialog.confirmed.connect(func(): _node_map_editor.controller.clear_history())
+	_node_map_editor.graph.get_menu_hbox().theme = tool_theme
+	_node_map_editor.graph.add_theme_stylebox_override("menu_panel", tool_theme.get_stylebox("normal", "Button"))
+	for preview_graph: GraphEdit in workspace.get_node("PlaceholderNodeMap/GraphStack").get_children():
+		preview_graph.get_menu_hbox().theme = tool_theme
+		preview_graph.add_theme_stylebox_override("menu_panel", tool_theme.get_stylebox("normal", "Button"))
 	_configure_menus()
 	_configure_project_dialog()
 	_configure_unsaved_changes_dialog()
@@ -63,12 +80,22 @@ func _ready() -> void:
 	add_to_group("node_map_navigation")
 	_node_map_editor.controller.history_changed.connect(_refresh_history)
 	_history_list.item_selected.connect(_on_history_item_selected)
+	_project_state.mouse_default_cursor_shape = Control.CURSOR_ARROW
 
 	_center_split.set_dragger_visibility(SplitContainer.DRAGGER_VISIBLE)
 	_set_bottom_expanded(false)
 	_set_docks_visible(true)
 	_on_project_state_changed(_node_map_editor.get_project_path(), _node_map_editor.is_project_dirty())
 	_refresh_history()
+
+func _update_workspace_header(tab: int) -> void:
+	var toolbar := _bottom_toggle.get_parent()
+	var preview := tab == 1
+	toolbar.get_node("Breadcrumb").text = "Static Preview" if preview else "Node Map"
+	var status: Label = toolbar.get_node("PlaceholderTag")
+	status.text = "Static Preview" if preview else "Editable"
+	status.tooltip_text = "Sample graph; node positions are locked" if preview else "Editable project graph"
+	status.modulate = Color("f0c987") if preview else Color.WHITE
 
 func _on_node_map_selection_changed() -> void:
 	var selected: Array = _node_map_editor.graph.get_selected_ids()
@@ -86,6 +113,7 @@ func _on_explorer_entry_activated(entry_id: String) -> void:
 func _refresh_history() -> void:
 	_history_list.clear()
 	var history: Array = _node_map_editor.controller.get_history()
+	_clear_history_button.disabled = history.is_empty()
 	var cursor: int = _node_map_editor.controller.get_history_cursor()
 	for index in history.size():
 		var item: Dictionary = history[index]
@@ -403,6 +431,9 @@ func _on_project_state_changed(path: String, dirty: bool) -> void:
 	_document_tab.text = caption
 	_document_tab.tooltip_text = "Unsaved project" if path.is_empty() else path
 	_document_state.text = "modified" if dirty else "saved"
+	_document_state.modulate = Color("#f0b35a") if dirty else Color("#75d6a1")
+	_project_state.text = "UNSAVED" if dirty else "READY"
+	_project_state.modulate = Color("#f0b35a") if dirty else Color("#75d6a1")
 	_document_state.tooltip_text = "Project has unsaved changes" if dirty else "Project is saved"
 	get_window().title = "GEL Editor - " + caption + (" *" if dirty else "")
 
@@ -411,9 +442,21 @@ func _on_toggle_docks() -> void:
 
 func _set_docks_visible(visible: bool) -> void:
 	_docks_visible = visible
-	_left_region.visible = visible
-	_right_region.visible = visible
-	_dock_toggle.text = "Docks" if visible else "Show Docks"
+	if _dock_tween:
+		_dock_tween.kill()
+	_dock_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	for region: Control in [_left_region, _right_region]:
+		if visible:
+			region.visible = true
+		_dock_tween.tween_property(region, "modulate:a", 1.0 if visible else 0.0, 0.14)
+	if not visible:
+		_dock_tween.chain().tween_callback(func():
+			_left_region.hide()
+			_right_region.hide()
+		)
+	_dock_toggle.text = "Docks"
+	_dock_toggle.set_pressed_no_signal(visible)
+	_dock_toggle.tooltip_text = "Hide side panels" if visible else "Show side panels"
 
 func _on_toggle_bottom() -> void:
 	_set_bottom_expanded(not _bottom_expanded)
@@ -424,9 +467,14 @@ func _on_bottom_tab_changed(tab_index: int) -> void:
 
 func _set_bottom_expanded(expanded: bool) -> void:
 	_bottom_expanded = expanded
-	_bottom_panel.custom_minimum_size.y = BOTTOM_EXPANDED_HEIGHT if expanded else BOTTOM_COLLAPSED_HEIGHT
+	var target_height := BOTTOM_EXPANDED_HEIGHT if expanded else BOTTOM_COLLAPSED_HEIGHT
+	if _bottom_tween:
+		_bottom_tween.kill()
+	_bottom_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_bottom_tween.tween_property(_bottom_panel, "custom_minimum_size:y", target_height, 0.18)
 	if expanded:
-		_bottom_panel.set_current_tab(0)
+		if _bottom_panel.get_current_tab() < 0:
+			_bottom_panel.set_current_tab(0)
 	elif _bottom_panel.get_current_tab() >= 0:
 		_bottom_panel.set_current_tab(-1)
 	_bottom_toggle.text = "Collapse" if expanded else "Expand"

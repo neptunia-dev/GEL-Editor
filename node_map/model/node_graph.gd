@@ -84,7 +84,7 @@ func validate_connections(resolved_ports: Dictionary) -> Array:
 		if source.direction != "output" or target.direction != "input":
 			errors.append(_link_error("invalid_direction", "连接必须从输出指向输入。", link))
 			continue
-		if source.kind != target.kind or source.value_type != target.value_type:
+		if source.kind != target.kind or (source.value_type != target.value_type and source.value_type != "json" and target.value_type != "json"):
 			errors.append(_link_error("incompatible_ports", "连接类别或值类型不匹配。", link))
 			continue
 		var key := JSON.stringify([link.source_node_id, link.source_port_id, link.target_node_id, link.target_port_id])

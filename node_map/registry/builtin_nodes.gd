@@ -15,6 +15,11 @@ const Choice := preload("res://node_map/nodes/choice_node.gd")
 const EndStory := preload("res://node_map/nodes/end_story_node.gd")
 const NumberModel := preload("res://node_map/nodes/number_node.gd")
 const BooleanModel := preload("res://node_map/nodes/boolean_node.gd")
+const GetVariableModel := preload("res://node_map/nodes/get_variable_node.gd")
+const SetVariableModel := preload("res://node_map/nodes/set_variable_node.gd")
+const CompareModel := preload("res://node_map/nodes/compare_node.gd")
+const LogicModel := preload("res://node_map/nodes/logic_node.gd")
+const MathModel := preload("res://node_map/nodes/math_node.gd")
 
 static func create_registry():
 	var registry := Registry.new()
@@ -29,6 +34,11 @@ static func create_registry():
 		_definition("gel.end_story", "End Story", "Story", "scene", EndStory, [_flow("in", "In", "input")]),
 		_definition("gel.number", "Number", "Data", "scene", NumberModel, [_data("value", "Value", "output", "number")], [_parameter("value", "Value", "number", true, 0.0)]),
 		_definition("gel.boolean", "Boolean", "Data", "scene", BooleanModel, [_data("value", "Value", "output", "boolean")], [_parameter("value", "Value", "boolean", true, false)]),
+		_definition("gel.get_variable", "Get Variable", "Data", "scene", GetVariableModel, [_data("value", "Value", "output", "json")], [_parameter("variable_key", "Variable", "string", true, "")]),
+		_definition("gel.set_variable", "Set Variable", "Flow", "scene", SetVariableModel, [_flow("in", "In", "input"), _data("value", "Value", "input", "json", 1), _flow("next", "Next", "output", 2)], [_parameter("variable_key", "Variable", "string", true, "")]),
+		_definition("gel.compare", "Compare", "Data", "scene", CompareModel, [_data("left", "Left", "input", "json"), _data("right", "Right", "input", "json", 1), _data("value", "Result", "output", "boolean", 2)], [_parameter("operation", "Operation", "string", true, "equals")]),
+		_definition("gel.logic", "Logic", "Data", "scene", LogicModel, [_data("left", "Left", "input", "boolean"), _data("right", "Right", "input", "boolean", 1), _data("value", "Result", "output", "boolean", 2)], [_parameter("operation", "Operation", "string", true, "and")]),
+		_definition("gel.math", "Math", "Data", "scene", MathModel, [_data("left", "Left", "input", "number"), _data("right", "Right", "input", "number", 1), _data("value", "Result", "output", "number", 2)], [_parameter("operation", "Operation", "string", true, "add")]),
 	]
 	for definition in definitions:
 		assert(registry.register_definition(definition), "内建节点定义必须有效。")
@@ -77,4 +87,6 @@ static func _parameter(parameter_id: String, label: String, value_type: String, 
 	parameter.required = true
 	parameter.has_default_value = has_default
 	parameter.default_value = default_value
+	if parameter_id == "operation":
+		parameter.constraints = {"enum": ["equals", "not_equals", "less_than", "less_or_equal", "greater_than", "greater_or_equal", "and", "or", "not", "add", "subtract", "multiply", "divide", "modulo"]}
 	return parameter

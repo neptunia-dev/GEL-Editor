@@ -4,12 +4,61 @@
 [ext_resource type="PackedScene" path="res://workspace/node_map/node_map_editor.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://workspace/node_map/placeholder_node_map.tscn" id="3"]
 
+[sub_resource type="StyleBoxFlat" id="TabNormal"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.063, 0.09, 0.114, 1)
+border_width_bottom = 1
+border_color = Color(0.353, 0.776, 0.737, 0.4)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="TabSelected"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.105, 0.259, 0.298, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.353, 0.776, 0.737, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+shadow_color = Color(0.353, 0.776, 0.737, 0.12)
+shadow_size = 2
+
+[sub_resource type="StyleBoxFlat" id="TabHover"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.102, 0.145, 0.176, 1)
+border_width_bottom = 2
+border_color = Color(0.45, 0.95, 0.87, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="TabBackground"]
+bg_color = Color(0.047, 0.071, 0.09, 1)
+
 [node name="NodeMapWorkspace" type="TabContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_selected_color = Color(0.94, 1, 0.98, 1)
+theme_override_colors/font_hovered_color = Color(0.94, 1, 0.98, 1)
+theme_override_colors/font_unselected_color = Color(0.65, 0.78, 0.76, 1)
+theme_override_styles/tab_selected = SubResource("TabSelected")
+theme_override_styles/tab_unselected = SubResource("TabNormal")
+theme_override_styles/tab_hovered = SubResource("TabHover")
+theme_override_styles/tabbar_background = SubResource("TabBackground")
+theme_override_styles/panel = SubResource("TabBackground")
 script = ExtResource("1")
 
 [node name="NodeMapEditor" parent="." instance=ExtResource("2")]

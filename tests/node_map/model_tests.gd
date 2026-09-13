@@ -55,6 +55,7 @@ func _run() -> void:
 	_test_scene_lifecycle()
 	_test_snapshot_validation()
 	_test_malformed_commands()
+	_test_p0_nodes()
 	if _failures == 0:
 		print("PASS: %d node map model checks" % _checks)
 		quit(0)
@@ -115,8 +116,8 @@ func _data_port(port_id: String, direction: String, value_type: String):
 
 func _test_definitions_and_values() -> void:
 	var registry = Builtins.create_registry()
-	_check(registry.list_definitions().size() == 10, "十个内建类型注册")
-	_check(registry.list_definitions("root").size() == 2 and registry.list_definitions("scene").size() == 8, "定义按图类别筛选")
+	_check(registry.list_definitions().size() == 15, "十五个内建类型注册")
+	_check(registry.list_definitions("root").size() == 2 and registry.list_definitions("scene").size() == 13, "定义按图类别筛选")
 	_check(registry.get_definition("missing") == null and registry.create_node("missing") == null, "未知类型不构建节点")
 	var definition = _extension_definition()
 	_check(registry.register_definition(definition), "扩展定义可以注册")
@@ -131,7 +132,7 @@ func _test_definitions_and_values() -> void:
 	registry.list_definitions()[0].allowed_graph_kinds.clear()
 	_check(registry.get_definition("test.extension").parameter_specs[1].constraints.enum.size() == 2, "定义查询隔离嵌套约束")
 	_check(not registry.register_definition(_extension_definition()), "重复类型拒绝")
-	_check(registry.list_definitions().size() == 11, "重复注册不改变集合")
+	_check(registry.list_definitions().size() == 16, "重复注册不改变集合")
 	var invalid = _extension_definition()
 	invalid.type_id = "test.invalid"
 	invalid.port_specs.append(invalid.port_specs[0])
@@ -420,6 +421,16 @@ func _test_malformed_commands() -> void:
 	_reject(document, {"op": "move_nodes", "positions": {"missing": Vector2.ZERO}})
 	_reject(document, {"op": "set_node_flags", "node_id": document.get_nodes(document.root_graph_id)[0].node_id, "values": {"position": true}})
 	_reject(document, {"op": "create_node", "type_id": "gel.scene", "graph_id": document.root_graph_id, "unexpected": true})
+
+func _test_p0_nodes() -> void:
+	var document = _new_document()
+	var graph_id := _scene(document)
+	for type_id in ["gel.get_variable", "gel.set_variable", "gel.compare", "gel.logic", "gel.math"]:
+		var node_id := _create(document, type_id, graph_id)
+		var node = document.get_node(node_id)
+		_check(node.get_parameter_values().has("variable_key") if type_id in ["gel.get_variable", "gel.set_variable"] else node.get_parameter_values().has("operation"), type_id + " persists its parameter")
+	var compare: Variant = _of_type(document, graph_id, "gel.compare")[0]
+	_reject(document, {"op": "set_parameter", "node_id": compare.node_id, "parameter_id": "operation", "value": "bad"}, "invalid_parameter")
 
 func _extension_definition():
 	var definition := Definition.new()
