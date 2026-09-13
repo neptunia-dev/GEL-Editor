@@ -14,6 +14,7 @@ func _init() -> void:
 func _run() -> void:
 	_test_execute_batch()
 	_test_ir_apply()
+	_test_ir_events()
 	await _test_authoring_files()
 	if _failures == 0:
 		print("PASS: %d authoring checks" % _checks)
@@ -86,6 +87,45 @@ func _test_ir_apply() -> void:
 	if compiled.ok:
 		_check("ctx.dialogue:narrate(\"The station is quiet.\")" in str(compiled.scripts["scenes/prologue/main.lua"]), "applied dialogue compiles to narration")
 		_check("ctx.flow:end_story()" in str(compiled.scripts["scenes/ending/main.lua"]), "applied ending compiles to end_story")
+
+func _test_ir_events() -> void:
+	var events: Array = [
+		{"op": "story", "entryScene": "prologue"},
+		{"op": "scene", "sceneId": "prologue", "title": "序章"},
+		{"op": "node", "id": "d1", "type": "gel.dialogue", "text": "The station is quiet."},
+		{"op": "node", "id": "out1", "type": "gel.graph_output", "interfaceId": "continue"},
+		{"op": "link", "from": ["entry", "out"], "to": ["d1", "in"]},
+		{"op": "link", "from": ["d1", "next"], "to": ["out1", "in"]},
+		{"op": "scene", "sceneId": "ending", "title": "结局"},
+		{"op": "node", "id": "end", "type": "gel.end_story"},
+		{"op": "link", "from": ["entry", "out"], "to": ["end", "in"]},
+		{"op": "route", "from": "prologue", "exit": "continue", "to": "ending"},
+		{"op": "done"},
+	]
+	var document = Document.new(Builtins.create_registry())
+	var controller = Controller.new(document)
+	var Applier := preload("res://node_map/compiler/story_ir_applier.gd")
+	var applier = Applier.new()
+	var session: Dictionary = applier.create_session()
+	controller.begin_external_batch()
+	for event in events:
+		var applied: Dictionary = applier.apply_event(document, session, event)
+		_check(applied.ok, "IR event %s applies: %s" % [str(event.get("op", "")), str(applied.get("diagnostics", []))])
+	controller.commit_external_batch()
+	_check(document.validate_self().is_empty(), "streamed document is structurally valid")
+	var compiled: Dictionary = preload("res://node_map/compiler/node_map_compiler.gd").new().compile(document)
+	_check(compiled.ok, "streamed document compiles: " + str(compiled.get("diagnostics", [])))
+	var rolled = Document.new(Builtins.create_registry())
+	var rolling = Controller.new(rolled)
+	var fail_session: Dictionary = applier.create_session()
+	var start: Dictionary = rolled.get_snapshot()
+	rolling.begin_external_batch()
+	applier.apply_event(rolled, fail_session, {"op": "story", "entryScene": "prologue"})
+	applier.apply_event(rolled, fail_session, {"op": "scene", "sceneId": "prologue", "title": "序章"})
+	var failed: Dictionary = applier.apply_event(rolled, fail_session, {"op": "link", "from": ["entry", "out"], "to": ["missing", "in"]})
+	_check(not failed.ok, "forward link is rejected")
+	rolling.abort_external_batch()
+	_check(rolled.get_snapshot() == start, "failed stream restores the document")
 
 func _test_authoring_files() -> void:
 	var panel = AUTHORING.instantiate()

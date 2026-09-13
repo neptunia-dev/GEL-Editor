@@ -12,6 +12,9 @@ var _poll: Timer
 var _busy := false
 var _pending_stage := ""
 var _chain: PackedStringArray = PackedStringArray()
+var _stream_offset := 0
+var _ir_session: Dictionary = {}
+var _stream_applier = null
 
 @onready var _files: ItemList = $Files
 @onready var _editor: TextEdit = $Main/Editor
@@ -121,11 +124,15 @@ func _start_stage(stage: String, extra: Array = []) -> void:
 		return
 	_busy = true
 	_pending_stage = stage
+	if stage == "ir":
+		_begin_ir_preview()
 	_set_status("Running " + stage + "...")
 	_poll.start()
-
 func _on_poll() -> void:
 	var status: Dictionary = _bridge.read_status(directory)
+	_refresh_preview(str(status.get("previewFile", "")))
+	if _pending_stage == "ir":
+		_consume_ir_stream()
 	if str(status.get("stage", "")) != _pending_stage or str(status.get("state", "")) != "done":
 		var message := str(status.get("message", ""))
 		_set_status(message if not message.is_empty() else "Running " + _pending_stage + "...")
@@ -147,12 +154,15 @@ func _on_poll() -> void:
 		elif stage == "review":
 			_set_status("Review finished. Generate IR when ready.")
 		elif stage == "ir":
-			apply_current_ir()
+			_finish_ir_preview(true)
+			_save_and_export()
 			return
 		else:
 			_set_status("Finished " + stage + ".")
 	else:
 		_chain.clear()
+		if _pending_stage == "ir":
+			_finish_ir_preview(false)
 		var diagnostics: Array = status.get("diagnostics", [])
 		_set_status(str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else str(status.get("message", "Authoring command failed")))
 
@@ -235,6 +245,79 @@ func _selection_focus(editor) -> String:
 			continue
 		lines.append("%s %s" % [node.node_type, str(node.get_parameter_values())])
 	return "\n".join(lines)
+
+
+func _begin_ir_preview() -> void:
+	var editor = get_parent().get_node_or_null("NodeMapEditor")
+	if editor == null:
+		return
+	editor.new_project()
+	editor.controller.begin_external_batch()
+	_stream_applier = APPLIER.new()
+	_ir_session = _stream_applier.create_session()
+	_stream_offset = 0
+	if get_parent() is TabContainer:
+		get_parent().current_tab = 0
+
+func _finish_ir_preview(ok: bool) -> void:
+	var editor = get_parent().get_node_or_null("NodeMapEditor")
+	if editor == null:
+		return
+	if ok:
+		editor.controller.commit_external_batch()
+	else:
+		editor.controller.abort_external_batch()
+	_stream_applier = null
+	_ir_session = {}
+
+func _refresh_preview(relative: String) -> void:
+	if relative.is_empty() or not _busy:
+		return
+	var text := load_relative(relative)
+	if _editor.text != text:
+		_editor.text = text
+		current_file = relative
+		_dirty = false
+
+func _consume_ir_stream() -> void:
+	if _stream_applier == null:
+		return
+	var path := directory.path_join("ir").path_join("stream.jsonl")
+	if not FileAccess.file_exists(path):
+		return
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return
+	file.seek(_stream_offset)
+	var editor = get_parent().get_node_or_null("NodeMapEditor")
+	if editor == null:
+		return
+	while file.get_position() < file.get_length():
+		var line := file.get_line().strip_edges()
+		if line.is_empty():
+			continue
+		var json := JSON.new()
+		if json.parse(line) != OK or not json.data is Dictionary:
+			continue
+		var applied: Dictionary = _stream_applier.apply_event(editor.document, _ir_session, json.data)
+		if not applied.ok:
+			_set_status(str(applied.get("diagnostics", [{}])[0].get("message", "IR event failed") if not applied.get("diagnostics", []).is_empty() else "IR event failed"))
+			break
+	_stream_offset = file.get_position()
+	if editor != null:
+		editor.graph.request_refresh()
+
+func _save_and_export() -> void:
+	var editor = get_parent().get_node_or_null("NodeMapEditor")
+	if editor == null:
+		return
+	editor.save_project(_project_path())
+	var exported: Dictionary = editor.export_runtime_package(directory.path_join("runtime-package"))
+	if exported.ok:
+		_set_status("Applied IR, saved project, exported Runtime Package.")
+	else:
+		var diagnostics: Array = exported.get("diagnostics", [])
+		_set_status(str(diagnostics[0].get("message", "Export failed")) if not diagnostics.is_empty() else "Export failed")
 
 func apply_current_ir() -> Dictionary:
 	if directory.is_empty():

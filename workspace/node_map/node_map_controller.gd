@@ -8,7 +8,8 @@ const HISTORY_LIMIT := 100
 var document
 var _undo: Array[Dictionary] = []
 var _redo: Array[Dictionary] = []
-
+var _external_before: Dictionary = {}
+var _external_open := false
 func _init(p_document) -> void:
 	document = p_document
 
@@ -52,6 +53,20 @@ func transact(work: Callable) -> Dictionary:
 	_record_history(before, document.get_snapshot(), {"op": "batch"})
 	diagnostics_changed.emit([])
 	return result
+
+func begin_external_batch() -> void:
+	_external_before = document.get_snapshot()
+	_external_open = true
+
+func commit_external_batch() -> void:
+	if _external_open:
+		_record_history(_external_before, document.get_snapshot(), {"op": "batch"})
+	_external_open = false
+
+func abort_external_batch() -> void:
+	if _external_open:
+		document.restore_snapshot(_external_before)
+	_external_open = false
 
 func _record_history(before: Dictionary, after: Dictionary, command: Dictionary) -> void:
 	if before == after:
