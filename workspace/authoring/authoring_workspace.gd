@@ -178,6 +178,12 @@ func _start_stage(stage: String, extra: Array = []) -> void:
 	_pending_stage = stage
 	if stage == "ir":
 		_begin_ir_preview()
+		_step_states[_current_step] = "done"
+		_current_step = 4
+		_step_states[4] = "current"
+		refresh_files()
+		_refresh_step_bar()
+		_refresh_action_bar()
 	elif stage == "scenes" or stage == "scripts":
 		if get_parent() is TabContainer:
 			get_parent().current_tab = get_parent().get_tab_count() - 1
@@ -224,6 +230,8 @@ func _on_poll() -> void:
 		elif stage == "ir":
 			_finish_ir_preview(true)
 			_save_and_export()
+			_refresh_step_bar()
+			_refresh_action_bar()
 			return
 		else:
 			_set_status("Finished " + stage + ".", "success")
