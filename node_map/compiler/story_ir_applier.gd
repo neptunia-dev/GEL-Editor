@@ -106,7 +106,7 @@ func _apply(document, story: Dictionary) -> Dictionary:
 		if not mapping is Dictionary:
 			return _fail("invalid_route", "Route mapping must be an object.")
 		for exit_id in mapping:
-			var port := str((scene_ports.get(str(source_id), {}) as Dictionary).get(str(exit_id), ""))
+			var port := str((scene_ports.get(str(source_id), {}) as Dictionary).get(_exit_id(str(exit_id)), ""))
 			var target_id := str(scene_nodes.get(str(mapping[exit_id]), ""))
 			if port.is_empty() or target_id.is_empty():
 				return _fail("invalid_route", "Route '" + str(source_id) + "." + str(exit_id) + "' is missing.")
@@ -166,7 +166,7 @@ func _fill_scene(document, scene_node_id: String, scene: Dictionary) -> Dictiona
 			var bound: Dictionary = _bind_output(document, output, interface_id)
 			if not bound.ok:
 				return bound
-			ports[interface_id] = interface_id
+			ports[_exit_id(interface_id)] = _exit_id(interface_id)
 	var column := 0
 	for node in scene.get("nodes", []):
 		if not node is Dictionary:
@@ -225,9 +225,13 @@ func _configure_node(document, node_id: String, node: Dictionary, choice_ports: 
 		_:
 			return {"ok": true, "diagnostics": []}
 func _bind_output(document, output, interface_id: String) -> Dictionary:
-	if output == null or interface_id.is_empty():
+	var exit_id := _exit_id(interface_id)
+	if output == null or exit_id.is_empty():
 		return {"ok": true, "diagnostics": []}
-	return document.bind_graph_output(output.node_id, interface_id)
+	return document.bind_graph_output(output.node_id, exit_id)
+
+func _exit_id(id: String) -> String:
+	return "continue" if id == "enter" else id
 
  
 
@@ -309,7 +313,7 @@ func _stream_node(document, session: Dictionary, event: Dictionary) -> Dictionar
 		session.output_index = int(session.output_index) + 1
 		session.saw_output = true
 		session.ids[str(event.get("id", ""))] = output.node_id
-		var interface_id := str(event.get("interfaceId", ""))
+		var interface_id := _exit_id(str(event.get("interfaceId", "")))
 		var bound: Dictionary = _bind_output(document, output, interface_id)
 		if not bound.ok:
 			return bound
@@ -358,7 +362,7 @@ func _stream_link(document, session: Dictionary, event: Dictionary) -> Dictionar
 
 func _stream_route(document, session: Dictionary, event: Dictionary) -> Dictionary:
 	var source_id := str(event.get("from", ""))
-	var exit_id := str(event.get("exit", ""))
+	var exit_id := _exit_id(str(event.get("exit", "")))
 	var target_key := str(event.get("to", ""))
 	var port := str((session.scene_ports.get(source_id, {}) as Dictionary).get(exit_id, ""))
 	var target_id := str(session.scene_nodes.get(target_key, ""))

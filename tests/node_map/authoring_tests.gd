@@ -15,6 +15,7 @@ func _init() -> void:
 func _run() -> void:
 	_test_execute_batch()
 	_test_ir_apply()
+	_test_ir_reserved_exit()
 	_test_ir_events()
 	await _test_authoring_files()
 	await _test_llm_status()
@@ -168,6 +169,36 @@ func _test_ir_events() -> void:
 	_check(not failed.ok, "forward link is rejected")
 	rolling.abort_external_batch()
 	_check(rolled.get_snapshot() == start, "failed stream restores the document")
+func _test_ir_reserved_exit() -> void:
+	var story := {
+		"format": "gel.story-ir",
+		"formatVersion": 1,
+		"entryScene": "prologue",
+		"scenes": [
+			{
+				"sceneId": "prologue",
+				"title": "序章",
+				"nodes": [
+					{"id": "d1", "type": "gel.dialogue", "text": "Go on."},
+					{"id": "out1", "type": "gel.graph_output", "interfaceId": "enter"},
+				],
+				"links": [["entry", "out", "d1", "in"], ["d1", "next", "out1", "in"]],
+			},
+			{
+				"sceneId": "ending",
+				"title": "结局",
+				"nodes": [{"id": "end", "type": "gel.end_story"}],
+				"links": [["entry", "out", "end", "in"]],
+			},
+		],
+		"routes": {"prologue": {"enter": "ending"}},
+	}
+	var document = Document.new(Builtins.create_registry())
+	var applied: Dictionary = preload("res://node_map/compiler/story_ir_applier.gd").new().apply_story(Controller.new(document), story)
+	_check(applied.ok, "IR remaps exit enter off the reserved entry id: " + str(applied.get("diagnostics", [])))
+	_check(document.validate_self().is_empty(), "remapped enter exit is valid")
+
+ 
 
 func _test_authoring_files() -> void:
 	var panel = AUTHORING.instantiate()
@@ -229,6 +260,13 @@ func _test_llm_status() -> void:
 	panel._on_poll()
 	_check(progress[0] == 2, "reasoning heartbeat growth emits progress")
 	_check(states[0] == 1, "repeated working state emits state change once")
+	panel._busy = true
+	panel._pending_stage = "scripts"
+	panel._set_status("Running scripts...", "running")
+	_write(dir.path_join("status.json"), "{")
+	panel._on_poll()
+	_check(panel._status_label.text == "Running scripts...", "busy poll ignores a torn status.json")
+	_check(panel._busy, "torn status.json does not finish the stage")
 	panel.queue_free()
 	await process_frame
 func _write(path: String, text: String) -> void:

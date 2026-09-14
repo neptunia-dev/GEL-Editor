@@ -61,5 +61,5 @@ func read_status(directory: String) -> Dictionary:
 		return {"state": "idle", "stage": "", "ok": false, "message": "Could not read status.json", "diagnostics": []}
 	var json := JSON.new()
 	if json.parse(file.get_as_text()) != OK or not json.data is Dictionary:
-		return {"state": "idle", "stage": "", "ok": false, "message": "Invalid status.json", "diagnostics": []}
+		return {"state": "idle", "stage": "", "ok": true, "message": "", "diagnostics": []}
 	return json.data

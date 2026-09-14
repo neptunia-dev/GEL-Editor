@@ -195,6 +195,12 @@ func _start_stage(stage: String, extra: Array = []) -> void:
 
 func _on_poll() -> void:
 	var status: Dictionary = _bridge.read_status(directory)
+	var stage := str(status.get("stage", ""))
+	var state := str(status.get("state", ""))
+	if stage != _pending_stage:
+		_set_status("Running " + _pending_stage + "...", "running")
+		_emit_llm_state("working", "Running " + _pending_stage + "...")
+		return
 	_refresh_preview(str(status.get("previewFile", "")))
 	if _pending_stage == "ir":
 		_consume_ir_stream()
@@ -205,7 +211,7 @@ func _on_poll() -> void:
 	if key != _activity_key:
 		_activity_key = key
 		llm_progress.emit()
-	if str(status.get("stage", "")) != _pending_stage or str(status.get("state", "")) != "done":
+	if state != "done":
 		_set_status(text, "running")
 		_emit_llm_state("working", text)
 		return
@@ -213,7 +219,6 @@ func _on_poll() -> void:
 	_busy = false
 	refresh_files()
 	if bool(status.get("ok", false)):
-		var stage := str(status.get("stage", ""))
 		_emit_llm_state("idle", "")
 		_advance_step()
 		if stage == "scenes":
