@@ -115,9 +115,11 @@ func _test_navigation() -> void:
 		_mouse_button(title_position, true)
 		_mouse_motion(title_position + Vector2(40, 40), Vector2(40, 40), MOUSE_BUTTON_MASK_LEFT)
 		_mouse_button(title_position + Vector2(40, 40), false)
+		var scroll_after_drag: Vector2 = _graph.scroll_offset
 		await _settle()
 		_check(not view.position_offset.is_equal_approx(position_before), "drag remains functional after return")
 		_check(_document.get_node(_scene_id).position == view.position_offset, "drag commits to model")
+		_check(_graph.scroll_offset.distance_to(scroll_after_drag) < 24.0, "releasing a drag does not jump the canvas viewport (%s -> %s)" % [scroll_after_drag, _graph.scroll_offset])
 	_editor.show_graph(_child_id)
 	await _settle()
 	_check(_document.get_links(_child_id).size() == 5, "sample child links exist")

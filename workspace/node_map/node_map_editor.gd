@@ -95,6 +95,7 @@ func show_graph(id: String) -> void:
 	if _graph_states.has(id):
 		graph.zoom = _graph_states[id].zoom
 		graph.scroll_offset = _graph_states[id].scroll
+		graph.keep_viewport()
 		for selected in _graph_states[id].selected:
 			var view = graph.get_node_view(selected)
 			if view != null:

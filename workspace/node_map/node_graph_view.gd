@@ -16,7 +16,9 @@ var _view_names: Dictionary = {}
 var _view_sequence := 0
 var _dragging := false
 var _refresh_pending := false
-
+var _keep_scroll := Vector2.ZERO
+var _keep_scroll_gen := 0
+var _pin_left := 0
 func _ready() -> void:
 	connection_request.connect(_connect_requested)
 	disconnection_request.connect(_disconnect_requested)
@@ -52,6 +54,10 @@ func _flush_refresh() -> void:
 func refresh() -> void:
 	if document == null or document.get_graph(graph_id) == null:
 		return
+	var keep_scroll := scroll_offset
+	var keep_zoom := zoom
+	if _keep_scroll_gen == 0:
+		_keep_scroll = keep_scroll
 	clear_connections()
 	var present: Dictionary = {}
 	for model in document.get_nodes(graph_id):
@@ -84,7 +90,30 @@ func refresh() -> void:
 		var input: int = target.input_port_ids.find(link.target_port_id)
 		if output >= 0 and input >= 0:
 			connect_node(source.name, output, target.name, input)
+	zoom = keep_zoom
+	scroll_offset = _keep_scroll if _keep_scroll_gen != 0 else keep_scroll
 	selection_changed.emit()
+
+func _process(_delta: float) -> void:
+	if _keep_scroll_gen == 0:
+		set_process(false)
+		return
+	scroll_offset = _keep_scroll
+	_pin_left -= 1
+	if _pin_left <= 0:
+		_keep_scroll_gen = 0
+		set_process(false)
+
+func keep_viewport(pin_frames := 0) -> void:
+	_keep_scroll = scroll_offset
+	_keep_scroll_gen += 1
+	_pin_left = pin_frames
+	if pin_frames > 0:
+		process_priority = 100000
+		set_process(true)
+	else:
+		_keep_scroll_gen = 0
+		set_process(false)
 
 func get_node_view(id: String):
 	return _views.get(id)
@@ -114,15 +143,20 @@ func duplicate_selection() -> void:
 		command_requested.emit({"op": "duplicate_nodes", "node_ids": ids})
 
 func _move_finished() -> void:
+	var keep := scroll_offset
 	_dragging = false
 	var positions: Dictionary = {}
 	for id in _views:
 		var model = document.get_node(id)
 		if model != null and not model.position.is_equal_approx(_views[id].position_offset):
 			positions[id] = _views[id].position_offset
-	if not positions.is_empty():
-		command_requested.emit({"op": "move_nodes", "positions": positions})
-	request_refresh()
+	scroll_offset = keep
+	keep_viewport(8)
+	if positions.is_empty():
+		return
+	_refresh_pending = true
+	command_requested.emit({"op": "move_nodes", "positions": positions})
+	_refresh_pending = false
 
 func _endpoints(from: StringName, output: int, to: StringName, input: int) -> Dictionary:
 	var source = _views.get(_view_names.get(str(from), ""))
@@ -165,6 +199,7 @@ func frame_all() -> void:
 	var available := (size - Vector2(96, 160)).max(Vector2.ONE)
 	zoom = clampf(minf(available.x / maxf(bounds.size.x, 1), available.y / maxf(bounds.size.y, 1)), zoom_min, 1)
 	scroll_offset = bounds.get_center() * zoom - size * 0.5 + Vector2(0, 12)
+	keep_viewport()
 
 func _get_connection_line(from: Vector2, to: Vector2) -> PackedVector2Array:
 	var curve := Curve2D.new()

@@ -63,7 +63,8 @@ func sync_from_document() -> void:
 	title = model.title_override if not model.title_override.is_empty() else str(parameters.get(_presentation.get("title_parameter", ""), _definition.display_name))
 	if title.is_empty():
 		title = _definition.display_name
-	position_offset = model.position
+	if not position_offset.is_equal_approx(model.position):
+		position_offset = model.position
 	draggable = not model.locked
 	self_modulate = Color.WHITE if model.enabled else Color("9fa5ac")
 	_fold_button.tooltip_text = "Expand node" if model.collapsed else "Collapse node"
