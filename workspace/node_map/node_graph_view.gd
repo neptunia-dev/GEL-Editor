@@ -19,6 +19,7 @@ var _refresh_pending := false
 var _keep_scroll := Vector2.ZERO
 var _keep_scroll_gen := 0
 var _pin_left := 0
+var follow_content := false
 func _ready() -> void:
 	connection_request.connect(_connect_requested)
 	disconnection_request.connect(_disconnect_requested)
@@ -90,8 +91,11 @@ func refresh() -> void:
 		var input: int = target.input_port_ids.find(link.target_port_id)
 		if output >= 0 and input >= 0:
 			connect_node(source.name, output, target.name, input)
-	zoom = keep_zoom
-	scroll_offset = _keep_scroll if _keep_scroll_gen != 0 else keep_scroll
+	if follow_content:
+		frame_all()
+	else:
+		zoom = keep_zoom
+		scroll_offset = _keep_scroll if _keep_scroll_gen != 0 else keep_scroll
 	selection_changed.emit()
 
 func _process(_delta: float) -> void:
@@ -189,16 +193,10 @@ func frame_all() -> void:
 	var bounds := Rect2(nodes[0].position_offset, nodes[0].size)
 	for node in nodes:
 		bounds = bounds.merge(Rect2(node.position_offset, node.size))
-	for link in get_connection_list():
-		var source: GraphNode = get_node(NodePath(link.from_node))
-		var target: GraphNode = get_node(NodePath(link.to_node))
-		var from := (source.position_offset + source.get_output_port_position(link.from_port)) * zoom
-		var to := (target.position_offset + target.get_input_port_position(link.to_port)) * zoom
-		for point in get_connection_line(from, to):
-			bounds = bounds.expand(point / zoom)
+	bounds = bounds.grow(48)
 	var available := (size - Vector2(96, 160)).max(Vector2.ONE)
 	zoom = clampf(minf(available.x / maxf(bounds.size.x, 1), available.y / maxf(bounds.size.y, 1)), zoom_min, 1)
-	scroll_offset = bounds.get_center() * zoom - size * 0.5 + Vector2(0, 12)
+	scroll_offset = bounds.get_center() * zoom - size * 0.5
 	keep_viewport()
 
 func _get_connection_line(from: Vector2, to: Vector2) -> PackedVector2Array:

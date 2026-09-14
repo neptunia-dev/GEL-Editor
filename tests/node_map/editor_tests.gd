@@ -65,6 +65,7 @@ func _run() -> void:
 	await _test_history()
 	await _test_layouts()
 	await _test_project_persistence()
+	await _test_follow_content()
 	_shell.queue_free()
 	await process_frame
 	if _failures == 0:
@@ -124,6 +125,19 @@ func _test_navigation() -> void:
 	await _settle()
 	_check(_document.get_links(_child_id).size() == 5, "sample child links exist")
 	await _capture("scene-1440")
+func _test_follow_content() -> void:
+	_editor.show_graph(_document.root_graph_id)
+	await _settle()
+	_graph.scroll_offset = Vector2(8000, 6000)
+	_graph.follow_content = true
+	_graph.refresh()
+	await _settle()
+	_graph.follow_content = false
+	var view_rect := Rect2(_graph.scroll_offset / _graph.zoom, _graph.size / _graph.zoom)
+	for node in _graph.get_graph_nodes():
+		_check(view_rect.grow(48).intersects(Rect2(node.position_offset, node.size)), "follow_content keeps cards on screen")
+
+ 
 
 func _mouse_button(at: Vector2, pressed: bool, double_click := false) -> void:
 	var event := InputEventMouseButton.new()

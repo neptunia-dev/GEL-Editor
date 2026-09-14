@@ -398,6 +398,7 @@ func _begin_ir_preview() -> void:
 	_stream_offset = 0
 	if get_parent() is TabContainer:
 		get_parent().current_tab = 0
+	editor.graph.follow_content = true
 
 func _finish_ir_preview(ok: bool) -> void:
 	var editor = get_parent().get_node_or_null("NodeMapEditor")
@@ -407,6 +408,8 @@ func _finish_ir_preview(ok: bool) -> void:
 		editor.controller.commit_external_batch()
 	else:
 		editor.controller.abort_external_batch()
+	editor.graph.follow_content = false
+	editor.graph.frame_all()
 	_stream_applier = null
 	_ir_session = {}
 
