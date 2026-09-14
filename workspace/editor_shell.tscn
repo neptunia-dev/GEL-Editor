@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://workspace/explorer/explorer_tree.gd" id="3_explorer_tree"]
 [ext_resource type="Script" path="res://workspace/explorer/node_map_explorer_panel.gd" id="4_node_map_explorer_panel"]
 [ext_resource type="Script" path="res://workspace/inspector/editor_inspector.gd" id="5_editor_inspector"]
+[ext_resource type="Script" path="res://workspace/authoring/llm_status_indicator.gd" id="6_llm_status"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bar"]
 content_margin_left = 6.0
@@ -665,10 +666,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="EditorBottomPanel" type="TabContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter" unique_id=213043958]
+[node name="BottomDock" type="Control" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter" unique_id=900000001]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 size_flags_vertical = 8
+
+[node name="EditorBottomPanel" type="TabContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock" unique_id=213043958]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_selected_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_colors/font_hovered_color = Color(0.835294, 0.835294, 0.835294, 1)
 theme_override_colors/font_unselected_color = Color(0.572549, 0.572549, 0.572549, 1)
@@ -681,7 +690,22 @@ tabs_position = 1
 deselect_enabled = true
 current_tab = -1
 
-[node name="Output" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=192454488]
+[node name="LlmStatus" type="HBoxContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock" unique_id=900000002]
+visible = false
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -384.0
+offset_top = -30.0
+offset_right = -8.0
+offset_bottom = -4.0
+mouse_filter = 2
+script = ExtResource("6_llm_status")
+
+[node name="Output" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel" unique_id=192454488]
 visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 12
@@ -690,14 +714,14 @@ theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 metadata/_tab_index = 0
 
-[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel/Output" unique_id=96656018]
+[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel/Output" unique_id=96656018]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 text = "Output placeholder  /  messages will appear here"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Problems" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=423985162]
+[node name="Problems" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel" unique_id=423985162]
 visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 12
@@ -706,14 +730,14 @@ theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 metadata/_tab_index = 1
 
-[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel/Problems" unique_id=158901494]
+[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel/Problems" unique_id=158901494]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 text = "Problems placeholder  /  no diagnostics"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Debugger" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel" unique_id=1163901890]
+[node name="Debugger" type="MarginContainer" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel" unique_id=1163901890]
 visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 12
@@ -722,7 +746,7 @@ theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 metadata/_tab_index = 2
 
-[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel/Debugger" unique_id=701585366]
+[node name="Content" type="Label" parent="EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel/Debugger" unique_id=701585366]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.572549, 0.572549, 0.572549, 1)
 text = "Debugger placeholder  /  no active session"

@@ -21,7 +21,9 @@ const UNSAVED_ACTION_DISCARD := "discard_changes"
 
 @onready var _main_split: HSplitContainer = $EditorRoot/DockHSplitMain
 @onready var _center_split: VSplitContainer = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter
-@onready var _bottom_panel: TabContainer = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/EditorBottomPanel
+@onready var _bottom_dock: Control = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock
+@onready var _bottom_panel: TabContainer = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/EditorBottomPanel
+@onready var _llm_status: HBoxContainer = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/BottomDock/LlmStatus
 @onready var _dock_toggle: Button = $EditorRoot/EditorTitleBar/TitleBarRow/ToggleDocks
 @onready var _bottom_toggle: Button = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceToolbar/ToolbarRow/ToggleBottomPanel
 @onready var _left_region: Control = $EditorRoot/DockHSplitMain/DockVSplitLeft
@@ -60,6 +62,9 @@ func _ready() -> void:
 	_inspector.configure(_node_map_editor.document, _node_map_editor.controller, _node_map_editor.registry)
 	_inspector.scene_requested.connect(_node_map_editor.show_graph)
 	_node_map_editor.document.changed.connect(func(_change): _inspector.refresh())
+	var authoring = $EditorRoot/DockHSplitMain/CenterRegion/DockVSplitCenter/TopWorkspaceSplit/MainWorkspace/WorkspaceCanvas/CanvasRoot/NodeMapWorkspace/AuthoringWorkspace
+	authoring.llm_state_changed.connect(_llm_status.set_state)
+	authoring.llm_progress.connect(_llm_status.advance)
 	add_to_group("node_map_navigation")
 	_node_map_editor.controller.history_changed.connect(_refresh_history)
 	_history_list.item_selected.connect(_on_history_item_selected)
@@ -425,7 +430,7 @@ func _on_bottom_tab_changed(tab_index: int) -> void:
 
 func _set_bottom_expanded(expanded: bool) -> void:
 	_bottom_expanded = expanded
-	_bottom_panel.custom_minimum_size.y = BOTTOM_EXPANDED_HEIGHT if expanded else BOTTOM_COLLAPSED_HEIGHT
+	_bottom_dock.custom_minimum_size.y = BOTTOM_EXPANDED_HEIGHT if expanded else BOTTOM_COLLAPSED_HEIGHT
 	if expanded:
 		_bottom_panel.set_current_tab(0)
 	elif _bottom_panel.get_current_tab() >= 0:
