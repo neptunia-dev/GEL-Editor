@@ -153,10 +153,11 @@ func _fill_scene(document, scene_node_id: String, scene: Dictionary) -> Dictiona
 			var ir: Dictionary = outputs[index]
 			var output = existing_outputs[index]
 			ids[str(ir.id)] = output.node_id
-			ports[str(ir.get("interfaceId", ""))] = output.interface_id
-			var renamed: Dictionary = document.execute({"op": "set_parameter", "node_id": output.node_id, "parameter_id": "display_name", "value": str(ir.get("interfaceId", output.display_name))})
-			if not renamed.ok:
-				return renamed
+			var interface_id := str(ir.get("interfaceId", ""))
+			var bound: Dictionary = _bind_output(document, output, interface_id)
+			if not bound.ok:
+				return bound
+			ports[interface_id] = interface_id
 	var column := 0
 	for node in scene.get("nodes", []):
 		if not node is Dictionary:
@@ -211,6 +212,12 @@ func _configure_node(document, node_id: String, node: Dictionary, choice_ports: 
 			return {"ok": true, "diagnostics": []}
 		_:
 			return {"ok": true, "diagnostics": []}
+func _bind_output(document, output, interface_id: String) -> Dictionary:
+	if output == null or interface_id.is_empty():
+		return {"ok": true, "diagnostics": []}
+	return document.bind_graph_output(output.node_id, interface_id)
+
+ 
 
 func _open_scene(document, session: Dictionary, event: Dictionary) -> Dictionary:
 	var scene_id := str(event.get("sceneId", ""))
@@ -234,6 +241,11 @@ func _open_scene(document, session: Dictionary, event: Dictionary) -> Dictionary
 		var disconnected: Dictionary = document.execute({"op": "disconnect", "link_id": link.link_id})
 		if not disconnected.ok:
 			return disconnected
+	for node in document.get_nodes(graph_id):
+		if node.node_type == "gel.graph_output":
+			var removed: Dictionary = document.execute({"op": "remove_nodes", "node_ids": [node.node_id]})
+			if not removed.ok:
+				return removed
 	session.current_scene_id = scene_id
 	session.current_scene_node_id = node_id
 	session.ids = {"entry": _find_type(document, graph_id, "gel.graph_input")}
@@ -282,8 +294,12 @@ func _stream_node(document, session: Dictionary, event: Dictionary) -> Dictionar
 		session.output_index = int(session.output_index) + 1
 		session.saw_output = true
 		session.ids[str(event.get("id", ""))] = output.node_id
-		session.ports[str(event.get("interfaceId", ""))] = output.interface_id
-		return document.execute({"op": "set_parameter", "node_id": output.node_id, "parameter_id": "display_name", "value": str(event.get("interfaceId", output.display_name))})
+		var interface_id := str(event.get("interfaceId", ""))
+		var bound: Dictionary = _bind_output(document, output, interface_id)
+		if not bound.ok:
+			return bound
+		session.ports[interface_id] = interface_id
+		return document.execute({"op": "set_parameter", "node_id": output.node_id, "parameter_id": "display_name", "value": interface_id if not interface_id.is_empty() else output.display_name})
 	var created: Dictionary = document.execute({"op": "create_node", "type_id": type_id, "graph_id": graph_id, "position": Vector2(280 * int(session.column), 80 if type_id != "gel.boolean" else 360)})
 	if not created.ok:
 		return created

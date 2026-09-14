@@ -43,6 +43,18 @@ func get_node(node_id: String):
 	var graph = _graph_for_node(node_id)
 	return graph._nodes[node_id].clone_snapshot() if graph != null else null
 
+
+
+func bind_graph_output(node_id: String, interface_id: String) -> Dictionary:
+	var node = _node(node_id)
+	if node == null or node.node_type != "gel.graph_output":
+		return _command_error({"node_id": node_id}, "wrong_node_type", "此命令只适用于输出边界节点。")
+	if not Values.valid_id(interface_id):
+		return _command_error({"node_id": node_id}, "invalid_interface", "出口身份无效。")
+	node.interface_id = interface_id
+	node.display_name = interface_id
+	return {"ok": true, "diagnostics": []}
+
 func get_links(graph_id: String) -> Array:
 	return _graphs[graph_id].get_links() if _graphs.has(graph_id) else []
 
