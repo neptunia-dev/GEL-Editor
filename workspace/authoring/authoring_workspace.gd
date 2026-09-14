@@ -580,10 +580,9 @@ func _skip_review() -> void:
 	if _busy or directory.is_empty() or _current_step != 2:
 		return
 	_step_states[2] = "done"
-	_step_states[3] = "done"
-	_current_step = 4
-	if _step_states[4] == "pending":
-		_step_states[4] = "current"
+	_current_step = 3
+	if _step_states[3] == "pending":
+		_step_states[3] = "current"
 	refresh_files()
 	_refresh_step_bar()
 	_refresh_action_bar()
