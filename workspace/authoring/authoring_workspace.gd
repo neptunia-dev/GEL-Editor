@@ -3,6 +3,8 @@ extends MarginContainer
 const BRIDGE := preload("res://node_map/integration/agent_cli_bridge.gd")
 const APPLIER := preload("res://node_map/compiler/story_ir_applier.gd")
 signal status_changed(message: String)
+signal llm_state_changed(state: String, message: String)
+signal llm_progress
 
 const STEP_NAMES: PackedStringArray = ["1. Outline", "2. Scenes", "3. Scripts", "4. Review", "5. IR"]
 const STEP_FILE_PREFIXES: PackedStringArray = ["outline", "scenes/", "scripts/", "review/", "ir/"]
@@ -24,6 +26,8 @@ var _busy := false
 var _pending_stage := ""
 var _chain: PackedStringArray = PackedStringArray()
 var _stream_offset := 0
+var _activity_key := ""
+var _llm_state_key := ""
 var _ir_session: Dictionary = {}
 var _stream_applier = null
 var _current_step := 0
@@ -178,6 +182,8 @@ func _start_stage(stage: String, extra: Array = []) -> void:
 		if get_parent() is TabContainer:
 			get_parent().current_tab = get_parent().get_tab_count() - 1
 	_set_status("Running " + stage + "...", "running")
+	_activity_key = ""
+	_emit_llm_state("working", "Running " + stage + "...")
 	_refresh_action_bar()
 	_poll.start()
 
@@ -186,15 +192,23 @@ func _on_poll() -> void:
 	_refresh_preview(str(status.get("previewFile", "")))
 	if _pending_stage == "ir":
 		_consume_ir_stream()
+	var message := str(status.get("message", ""))
+	var text := message if not message.is_empty() else "Running " + _pending_stage + "..."
+	var preview_file := str(status.get("previewFile", ""))
+	var key := "%s|%s|%d|%d|%d" % [message, preview_file, _file_size(preview_file), _file_size("activity"), _stream_offset + _file_size("ir/stream.jsonl")]
+	if key != _activity_key:
+		_activity_key = key
+		llm_progress.emit()
 	if str(status.get("stage", "")) != _pending_stage or str(status.get("state", "")) != "done":
-		var message := str(status.get("message", ""))
-		_set_status(message if not message.is_empty() else "Running " + _pending_stage + "...", "running")
+		_set_status(text, "running")
+		_emit_llm_state("working", text)
 		return
 	_poll.stop()
 	_busy = false
 	refresh_files()
 	if bool(status.get("ok", false)):
 		var stage := str(status.get("stage", ""))
+		_emit_llm_state("idle", "")
 		_advance_step()
 		if stage == "scenes":
 			_set_status("Review scenes/*.md, then generate scripts.", "success")
@@ -220,6 +234,7 @@ func _on_poll() -> void:
 		var diagnostics: Array = status.get("diagnostics", [])
 		var error_message := str(diagnostics[0].get("message", "Authoring command failed")) if not diagnostics.is_empty() else str(status.get("message", "Authoring command failed"))
 		_set_status(error_message, "error")
+		_emit_llm_state("error", error_message)
 		_mark_step_error()
 	_refresh_step_bar()
 	_refresh_action_bar()
@@ -246,7 +261,7 @@ func _collect_files(root: String, prefix: String, found: PackedStringArray) -> v
 		if access.current_is_dir():
 			if name != "runtime-package":
 				_collect_files(root, relative, found)
-		elif name != "status.json":
+		elif name != "status.json" and name != "activity":
 			found.append(relative)
 		name = access.get_next()
 	access.list_dir_end()
@@ -508,6 +523,22 @@ func _set_status(message: String, level := "info") -> void:
 			_status_style.border_color = Color(0.4, 0.4, 0.4, 1)
 			_status_label.add_theme_color_override("font_color", TEXT_MUTED)
 	status_changed.emit(message)
+
+func _emit_llm_state(state: String, message: String) -> void:
+	var key := state + "|" + message
+	if key == _llm_state_key:
+		return
+	_llm_state_key = key
+	llm_state_changed.emit(state, message)
+
+func _file_size(relative: String) -> int:
+	if relative.is_empty() or directory.is_empty():
+		return 0
+	var path := directory.path_join(relative)
+	if not FileAccess.file_exists(path):
+		return 0
+	var size := FileAccess.get_size(path)
+	return size if size >= 0 else 0
 
 # --- Step bar ---
 

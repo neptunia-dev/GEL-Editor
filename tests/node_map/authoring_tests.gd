@@ -4,6 +4,7 @@ const Builtins := preload("res://node_map/registry/builtin_nodes.gd")
 const Document := preload("res://node_map/model/node_map_document.gd")
 const Controller := preload("res://workspace/node_map/node_map_controller.gd")
 const AUTHORING := preload("res://workspace/authoring/authoring_workspace.tscn")
+const INDICATOR := preload("res://workspace/authoring/llm_status_indicator.gd")
 
 var _checks := 0
 var _failures := 0
@@ -16,6 +17,7 @@ func _run() -> void:
 	_test_ir_apply()
 	_test_ir_events()
 	await _test_authoring_files()
+	await _test_llm_status()
 	if _failures == 0:
 		print("PASS: %d authoring checks" % _checks)
 		quit(0)
@@ -162,6 +164,51 @@ func _test_authoring_files() -> void:
 	panel.queue_free()
 	await process_frame
 
+
+func _test_llm_status() -> void:
+	var indicator = INDICATOR.new()
+	root.add_child(indicator)
+	await process_frame
+	indicator.set_state("working", "Running scenes...")
+	_check(indicator.visible, "indicator visible while working")
+	indicator.set_state("error", "boom")
+	_check(indicator.visible, "indicator visible on error")
+	indicator.set_state("idle", "")
+	_check(not indicator.visible, "indicator hidden when idle")
+	indicator.set_state("working", "Running scenes...")
+	indicator.advance()
+	_check(indicator._speed > indicator.BASE_SPEED, "advance boosts speed above base")
+	indicator._process(0.1)
+	_check(indicator._phase > 0.0, "process rotates the arc")
+	for i in 20:
+		indicator._process(0.5)
+	_check(indicator._speed < indicator.BASE_SPEED * 1.1, "speed decays back toward base")
+	indicator.queue_free()
+
+	var panel = AUTHORING.instantiate()
+	root.add_child(panel)
+	await process_frame
+	_check(panel.has_signal("llm_state_changed"), "authoring exposes llm_state_changed")
+	_check(panel.has_signal("llm_progress"), "authoring exposes llm_progress")
+	var dir := ProjectSettings.globalize_path("user://llm-status-test")
+	DirAccess.make_dir_recursive_absolute(dir)
+	DirAccess.remove_absolute(dir.path_join("activity"))
+	_write(dir.path_join("status.json"), "{\"state\":\"running\",\"stage\":\"scenes\",\"ok\":true,\"message\":\"\",\"diagnostics\":[]}\n")
+	panel.directory = dir
+	panel._pending_stage = "scenes"
+	var progress := [0]
+	var states := [0]
+	panel.llm_progress.connect(func(): progress[0] += 1)
+	panel.llm_state_changed.connect(func(_state, _message): states[0] += 1)
+	panel._on_poll()
+	panel._on_poll()
+	_check(progress[0] == 1, "unchanged activity fingerprint emits progress once")
+	_write(dir.path_join("activity"), "..")
+	panel._on_poll()
+	_check(progress[0] == 2, "reasoning heartbeat growth emits progress")
+	_check(states[0] == 1, "repeated working state emits state change once")
+	panel.queue_free()
+	await process_frame
 func _write(path: String, text: String) -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(text)
