@@ -83,6 +83,28 @@ func _test_ir_apply() -> void:
 	var applied: Dictionary = Applier.new().apply_story(controller, story)
 	_check(applied.ok, "story IR applies: " + str(applied.get("diagnostics", [])))
 	_check(document.validate_self().is_empty(), "applied document is structurally valid")
+	var start_node
+	var prologue_node
+	var ending_node
+	for node in document.get_nodes(document.root_graph_id):
+		if node.node_type == "gel.project_start":
+			start_node = node
+		elif node.node_type == "gel.scene":
+			if str(node.get_parameter_values().get("scene_id", "")) == "prologue":
+				prologue_node = node
+			elif str(node.get_parameter_values().get("scene_id", "")) == "ending":
+				ending_node = node
+	_check(start_node != null and prologue_node != null and ending_node != null, "layout finds start and scenes")
+	_check(prologue_node.position.x > start_node.position.x + 100, "entry scene sits to the right of start")
+	_check(ending_node.position.x > prologue_node.position.x + 100, "later scene sits to the right of entry")
+	var entry_pos := Vector2.ZERO
+	var talk_pos := Vector2.ZERO
+	for node in document.get_nodes(prologue_node.child_graph_id):
+		if node.node_type == "gel.graph_input":
+			entry_pos = node.position
+		elif node.node_type == "gel.dialogue":
+			talk_pos = node.position
+	_check(talk_pos.x > entry_pos.x + 80, "dialogue sits to the right of scene entry")
 	var Compiler := preload("res://node_map/compiler/node_map_compiler.gd")
 	var compiled: Dictionary = Compiler.new().compile(document)
 	_check(compiled.ok, "applied document compiles: " + str(compiled.get("diagnostics", [])))

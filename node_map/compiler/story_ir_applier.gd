@@ -44,12 +44,18 @@ func apply_event(document, session: Dictionary, event: Dictionary) -> Dictionary
 			var after_scene: Dictionary = _close_scene(document, session)
 			if not after_scene.ok:
 				return after_scene
-			return _stream_route(document, session, event)
+			var routed: Dictionary = _stream_route(document, session, event)
+			if not routed.ok:
+				return routed
+			return _layout_root(document, session)
 		"done":
 			var finished: Dictionary = _close_scene(document, session)
 			if not finished.ok:
 				return finished
-			return _connect_start(document, session)
+			var started: Dictionary = _connect_start(document, session)
+			if not started.ok:
+				return started
+			return _layout_root(document, session)
 		_:
 			return _fail("invalid_ir_event", "Unknown IR event.")
 func _apply(document, story: Dictionary) -> Dictionary:
@@ -114,6 +120,9 @@ func _apply(document, story: Dictionary) -> Dictionary:
 			})
 			if not routed.ok:
 				return routed
+	var laid: Dictionary = _layout_flow(document, document.root_graph_id, start_id, 440.0, 260.0, Vector2(80, 180))
+	if not laid.ok:
+		return laid
 	return {"ok": true, "diagnostics": []}
 
 func _fill_scene(document, scene_node_id: String, scene: Dictionary) -> Dictionary:
@@ -193,6 +202,9 @@ func _fill_scene(document, scene_node_id: String, scene: Dictionary) -> Dictiona
 		})
 		if not connected.ok:
 			return connected
+	var laid: Dictionary = _layout_flow(document, graph_id, ids.get("entry", ""), 300.0, 170.0, Vector2(40, 80))
+	if not laid.ok:
+		return laid
 	return {"ok": true, "diagnostics": [], "ports": ports}
 
 func _configure_node(document, node_id: String, node: Dictionary, choice_ports: Dictionary) -> Dictionary:
@@ -260,6 +272,9 @@ func _close_scene(document, session: Dictionary) -> Dictionary:
 	var scene_id := str(session.get("current_scene_id", ""))
 	if scene_id.is_empty():
 		return {"ok": true, "diagnostics": []}
+	var arranged: Dictionary = _layout_scene(document, session)
+	if not arranged.ok:
+		return arranged
 	if not bool(session.saw_output):
 		var graph_id: String = document.get_node(str(session.current_scene_node_id)).child_graph_id
 		for node in document.get_nodes(graph_id):
@@ -306,7 +321,13 @@ func _stream_node(document, session: Dictionary, event: Dictionary) -> Dictionar
 	session.column = int(session.column) + 1
 	var node_id := str(created.created_node_id)
 	session.ids[str(event.get("id", ""))] = node_id
-	return _configure_node(document, node_id, event, session.choice_ports)
+	var configured: Dictionary = _configure_node(document, node_id, event, session.choice_ports)
+	if not configured.ok:
+		return configured
+	var laid: Dictionary = _layout_scene(document, session)
+	if not laid.ok:
+		return laid
+	return configured
 
 func _stream_link(document, session: Dictionary, event: Dictionary) -> Dictionary:
 	var source: Variant = event.get("from", [])
@@ -323,7 +344,7 @@ func _stream_link(document, session: Dictionary, event: Dictionary) -> Dictionar
 	var target_id := str(session.ids.get(str(target[0]), ""))
 	if source_id.is_empty() or target_id.is_empty():
 		return _fail("missing_node", "Link endpoint is missing.")
-	return document.execute({
+	var connected: Dictionary = document.execute({
 		"op": "connect",
 		"graph_id": graph_id,
 		"source_node_id": source_id,
@@ -331,6 +352,9 @@ func _stream_link(document, session: Dictionary, event: Dictionary) -> Dictionar
 		"target_node_id": target_id,
 		"target_port_id": str(target[1]),
 	})
+	if not connected.ok:
+		return connected
+	return _layout_scene(document, session)
 
 func _stream_route(document, session: Dictionary, event: Dictionary) -> Dictionary:
 	var source_id := str(event.get("from", ""))
@@ -369,6 +393,88 @@ func _find_type(document, graph_id: String, type_id: String) -> String:
 		if node.node_type == type_id:
 			return node.node_id
 	return ""
+
+
+func _layout_root(document, session: Dictionary) -> Dictionary:
+	var start_id := _find_type(document, document.root_graph_id, "gel.project_start")
+	return _layout_flow(document, document.root_graph_id, start_id, 440.0, 260.0, Vector2(80, 180))
+
+func _layout_scene(document, session: Dictionary) -> Dictionary:
+	var scene_node_id := str(session.get("current_scene_node_id", ""))
+	if scene_node_id.is_empty():
+		return {"ok": true, "diagnostics": []}
+	var graph_id: String = document.get_node(scene_node_id).child_graph_id
+	return _layout_flow(document, graph_id, str(session.ids.get("entry", "")), 300.0, 170.0, Vector2(40, 80))
+
+func _layout_flow(document, graph_id: String, start_id: String, col_gap: float, row_gap: float, origin: Vector2) -> Dictionary:
+	if start_id.is_empty():
+		return {"ok": true, "diagnostics": []}
+	var successors: Dictionary = {}
+	var all_ids: Array = []
+	for node in document.get_nodes(graph_id):
+		all_ids.append(node.node_id)
+		successors[node.node_id] = []
+	for link in document.get_links(graph_id):
+		if not _is_flow_output(document, link.source_node_id, link.source_port_id):
+			continue
+		(successors[link.source_node_id] as Array).append(link.target_node_id)
+	var layer_of: Dictionary = {}
+	var layers: Dictionary = {}
+	var queue: Array = [start_id]
+	layer_of[start_id] = 0
+	layers[0] = [start_id]
+	var cursor := 0
+	while cursor < queue.size():
+		var id: String = queue[cursor]
+		cursor += 1
+		for nxt in successors.get(id, []):
+			if layer_of.has(nxt):
+				continue
+			var layer: int = int(layer_of[id]) + 1
+			layer_of[nxt] = layer
+			if not layers.has(layer):
+				layers[layer] = []
+			(layers[layer] as Array).append(nxt)
+			queue.append(nxt)
+	var rest: Array = []
+	for id in all_ids:
+		if not layer_of.has(id):
+			rest.append(id)
+	if not rest.is_empty():
+		var extra := 0
+		for key in layers.keys():
+			extra = maxi(extra, int(key))
+		extra += 1
+		layers[extra] = rest
+	for link in document.get_links(graph_id):
+		if str(link.target_port_id) != "condition":
+			continue
+		var if_id := str(link.target_node_id)
+		var bool_id := str(link.source_node_id)
+		if not layer_of.has(if_id):
+			continue
+		layer_of[bool_id] = layer_of[if_id]
+		for key in layers.keys():
+			(layers[key] as Array).erase(bool_id)
+		var if_layer: int = int(layer_of[if_id])
+		if not layers.has(if_layer):
+			layers[if_layer] = []
+		(layers[if_layer] as Array).append(bool_id)
+	var positions: Dictionary = {}
+	for layer in layers.keys():
+		var ids: Array = layers[layer]
+		var y0 := origin.y - float(maxi(ids.size() - 1, 0)) * row_gap * 0.5
+		for i in ids.size():
+			positions[ids[i]] = Vector2(origin.x + float(layer) * col_gap, y0 + float(i) * row_gap)
+	if positions.is_empty():
+		return {"ok": true, "diagnostics": []}
+	return document.execute({"op": "move_nodes", "positions": positions})
+
+func _is_flow_output(document, node_id: String, port_id: String) -> bool:
+	for port in document.get_ports(node_id):
+		if str(port.port_id) == port_id:
+			return str(port.kind) == "flow" and str(port.direction) == "output"
+	return false
 
 func _error(code: String, message: String) -> Dictionary:
 	return {"code": code, "message": message, "severity": "error", "graph_id": "", "node_id": "", "port_id": "", "link_id": ""}
